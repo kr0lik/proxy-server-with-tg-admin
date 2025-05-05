@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"proxy-server-with-tg-admin/internal/entity"
 	"proxy-server-with-tg-admin/internal/helper"
@@ -24,7 +23,7 @@ func (c *CreateUser) Run(args ...string) (string, error) {
 	var username string
 
 	if len(args) == 0 {
-		return "", errors.New("username is required")
+		return "", ErrUsernameRequired
 	} else {
 		username = args[0]
 	}

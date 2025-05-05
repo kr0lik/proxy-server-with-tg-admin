@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"proxy-server-with-tg-admin/internal/helper"
 	"time"
@@ -23,7 +22,7 @@ func (c *GetStatistic) Run(args ...string) (string, error) {
 	var username string
 
 	if len(args) == 0 {
-		return "", errors.New("username is required")
+		return "", ErrUsernameRequired
 	} else {
 		username = args[0]
 	}
@@ -38,7 +37,7 @@ func (c *GetStatistic) Run(args ...string) (string, error) {
 		updated = userStat.Updated.Format(time.DateOnly)
 	}
 
-	return fmt.Sprintf("Last activity %s.\nIn: %s\nOut: %s\nActive dyes: %d\n\nTotal In: %s\nTotal Out: %s",
+	return fmt.Sprintf("Last activity %s.\nin: %s\nout: %s\nActive dyes: %d\n\nTotal in: %s\nTotal out: %s",
 		updated,
 		helper.FromBytesFormat(userStat.TrafficInDay),
 		helper.FromBytesFormat(userStat.TrafficOutDay),

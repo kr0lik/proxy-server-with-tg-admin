@@ -4,7 +4,6 @@ import (
 	"fmt"
 	tele "gopkg.in/telebot.v4"
 	"gopkg.in/telebot.v4/middleware"
-	"log/slog"
 	"proxy-server-with-tg-admin/internal/usecase/commands"
 	"strings"
 )
@@ -24,14 +23,6 @@ func GetTelegramBot(token string, adminId int64, commands *commands.List) (*tele
 	registerCommands(bot, commands)
 
 	return bot, nil
-}
-
-func start(bot *tele.Bot, logger *slog.Logger) {
-	logger.Debug("starting telegram bot")
-
-	bot.Start()
-
-	logger.Debug("telegram bot stopped")
 }
 
 func registerCommands(bot *tele.Bot, commands *commands.List) {

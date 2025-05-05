@@ -6,60 +6,82 @@ import (
 	"time"
 )
 
+const syncPeriod = time.Second * 30
+
 type StorageInterface interface {
 	AddStat(userId uint32, bytesIn, bytesOut uint64) error
 }
 
-const syncPeriod = time.Second * 30
-
-type stat struct {
-	UserId uint32
-	In     uint64
-	Out    uint64
+type incomeStat struct {
+	userId uint32
+	in     uint64
+	out    uint64
 }
 
 type Tracker struct {
-	incomeCh chan stat
-	stopCh   chan chan struct{}
-	stats    sync.Map // map[uint32]*statistic
-	storage  StorageInterface
-	logger   *slog.Logger
+	stats           sync.Map // map[uint32]*statistic
+	consumeIncomeCh chan incomeStat
+	consumeStopCh   chan struct{}
+	syncStopCh      chan struct{}
+	wg              sync.WaitGroup
+	storage         StorageInterface
+	logger          *slog.Logger
 }
 
 func New(storage StorageInterface, logger *slog.Logger) *Tracker {
 	return &Tracker{
-		incomeCh: make(chan stat, 10000),
-		stopCh:   make(chan chan struct{}),
-		stats:    sync.Map{},
-		storage:  storage,
-		logger:   logger,
+		consumeIncomeCh: make(chan incomeStat, 10000),
+		consumeStopCh:   make(chan struct{}),
+		syncStopCh:      make(chan struct{}),
+		storage:         storage,
+		logger:          logger,
 	}
 }
 
 func (t *Tracker) Start() {
-	stopSyncCh := make(chan struct{})
+	t.wg.Add(2)
 
 	go func() {
+		defer t.wg.Done()
+
 		t.consume()
-		close(stopSyncCh)
 	}()
 
-	go t.sync(stopSyncCh)
+	go func() {
+		defer t.wg.Done()
 
-	select {
-	case <-t.stopCh:
-		t.logger.Debug("Statistic tracker stopping")
-		close(t.incomeCh)
-		return
-	}
+		t.sync()
+	}()
 }
 
 func (t *Tracker) Stop() {
-	close(t.stopCh)
+	t.logger.Debug("Statistic tracker stopping")
+
+	close(t.consumeStopCh)
+
+	t.wg.Wait()
+
+	t.commit()
+
+	t.logger.Debug("Statistic tracker stopped")
 }
 
-func (t *Tracker) Track(UserId uint32, In uint64, Out uint64) {
-	t.incomeCh <- stat{UserId: UserId, In: In, Out: Out}
+func (t *Tracker) Track(userId uint32, in uint64, out uint64) {
+	if userId == 0 {
+		t.logger.Warn("Statistic tracker", "userId", userId)
+		return
+	}
+
+	if in == 0 && out == 0 {
+		return
+	}
+
+	select {
+	case t.consumeIncomeCh <- incomeStat{userId: userId, in: in, out: out}:
+	default:
+		t.logger.Warn("Statistic tracker consumeIncomeCh buffer ends")
+		t.cache(userId, in, out)
+	}
 }
 
 func (t *Tracker) consume() {
@@ -67,27 +89,24 @@ func (t *Tracker) consume() {
 
 	for {
 		select {
-		case dto, ok := <-t.incomeCh:
-			if !ok {
-				t.logger.Warn("Statistic tracker consume stopped")
-				return
+		case dto := <-t.consumeIncomeCh:
+			t.cache(dto.userId, dto.in, dto.out)
+		case <-t.consumeStopCh:
+			for {
+				select {
+				case dto := <-t.consumeIncomeCh:
+					t.cache(dto.userId, dto.in, dto.out)
+				default:
+					t.logger.Warn("Statistic tracker consume stopped")
+					close(t.syncStopCh)
+					return
+				}
 			}
-
-			if dto.UserId == 0 {
-				t.logger.Warn("Statistic tracker", "UserId", dto.UserId)
-				continue
-			}
-
-			if dto.In == 0 && dto.Out == 0 {
-				continue
-			}
-
-			t.cache(dto.UserId, dto.In, dto.Out)
 		}
 	}
 }
 
-func (t *Tracker) sync(stopSyncCh chan struct{}) {
+func (t *Tracker) sync() {
 	t.logger.Debug("Statistic tracker sync start")
 
 	ticker := time.NewTicker(syncPeriod)
@@ -97,9 +116,8 @@ func (t *Tracker) sync(stopSyncCh chan struct{}) {
 		select {
 		case <-ticker.C:
 			t.commit()
-		case <-stopSyncCh:
+		case <-t.syncStopCh:
 			t.logger.Warn("Statistic tracker sync stopped")
-			t.commit()
 			return
 		}
 	}
@@ -109,21 +127,6 @@ func (t *Tracker) cache(userId uint32, in, out uint64) {
 	val, _ := t.stats.LoadOrStore(userId, &statistic{})
 	st := val.(*statistic)
 	st.Increment(in, out)
-}
-
-func (t *Tracker) delete(userId uint32) {
-	val, ok := t.stats.Load(userId)
-	if !ok {
-		return
-	}
-
-	st := val.(*statistic)
-
-	if st.in == 0 && st.out == 0 {
-		t.stats.Delete(userId)
-
-		t.logger.Debug("Statistic tracker cache", "delete", userId)
-	}
 }
 
 func (t *Tracker) commit() {

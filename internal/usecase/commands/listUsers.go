@@ -18,7 +18,10 @@ func (c *ListUsers) Arguments() string {
 }
 
 func (c *ListUsers) Run(args ...string) (string, error) {
-	list := c.storage.ListUsers()
+	list, err := c.storage.ListUsers()
+	if err != nil {
+		return "", err
+	}
 
 	res := ""
 

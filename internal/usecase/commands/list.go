@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-var UnknownCommand = errors.New("unknown command")
+var ErrUnknownCommand = errors.New("unknown command")
+var ErrUsernameRequired = errors.New("username required")
 
 type StorageInterface interface {
 	CreateUser(username, password string) (uint32, error)
@@ -15,7 +16,7 @@ type StorageInterface interface {
 	UpdatePassword(username, password string) error
 	UpdateTtl(username string, ttl time.Time) error
 	GetStatistic(username string) (*entity.UserStat, error)
-	ListUsers() []*entity.User
+	ListUsers() ([]*entity.User, error)
 	DeleteUser(username string) error
 	DeleteUserStat(username string) error
 }
@@ -56,5 +57,5 @@ func (c *List) Get(id string) (Cmd, error) {
 		}
 	}
 
-	return nil, UnknownCommand
+	return nil, ErrUnknownCommand
 }

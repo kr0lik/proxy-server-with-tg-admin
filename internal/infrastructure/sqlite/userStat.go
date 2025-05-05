@@ -48,8 +48,8 @@ func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 
 	userId, err := s.GetUserId(username)
 	if err != nil {
-		if errors.Is(err, UserNotFound) {
-			return nil, UserNotFound
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, ErrUserNotFound
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"proxy-server-with-tg-admin/internal/entity"
-	"sync"
 	"time"
 )
 
@@ -21,7 +20,6 @@ type Authenticator struct {
 func New(storage UserStorageInterface, logger *slog.Logger) *Authenticator {
 	cache := &cache{
 		data:    make(map[string]*state),
-		mu:      sync.RWMutex{},
 		storage: storage,
 		logger:  logger,
 	}

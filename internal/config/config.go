@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"log/slog"
 	"os"
 	"strings"
 )
@@ -19,7 +18,6 @@ type Config struct {
 	telegramBotToken string
 	telegramAdminId  int64
 	sqlitePath       string
-	logLevel         slog.Level
 }
 
 func (c *Config) Env() string {

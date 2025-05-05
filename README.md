@@ -1,4 +1,4 @@
-# WIP:proxy-server-with-tg-admin
+# proxy-server-with-tg-admin
 
 Socks5 Proxy server with remote control via telegram bot.
 
@@ -46,4 +46,5 @@ Where:
 
 ```
 docker run -v .:/app -w /app --rm golang:1.24-alpine go run cmd/server/main.go --env=dev --port-socks5=1080 --telegram-bot-token= --telegram-admin-id=
+docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v2.1.6-alpine golangci-lint run
 ```

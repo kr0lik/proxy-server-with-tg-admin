@@ -18,6 +18,7 @@ func (cl CustomLogger) Errorf(format string, v ...interface{}) {
 	cl.logger.Error("socks5.server", "internal", fmt.Sprintf(format, v...))
 }
 
+// TODO
 func GetServer(statisticTracker *statistic.Tracker, authenticator *auth.Authenticator, logger *slog.Logger) *socks5.Server {
 	return socks5.NewServer(
 		socks5.WithCredential(&CredentialStore{authenticator: authenticator, logger: logger}),

@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-var UserNotFound = errors.New("user not found")
-var UserExists = errors.New("user already exists")
+var ErrUserNotFound = errors.New("user not found")
+var ErrUserExists = errors.New("user already exists")
 
 type scanRow interface {
 	Scan(dest ...any) error
@@ -27,7 +27,7 @@ func (s *Storage) CreateUser(username, password string) (uint32, error) {
 	res, err := smtp.Exec(username, password)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			return 0, UserExists
+			return 0, ErrUserExists
 		}
 
 		return 0, fmt.Errorf("%s: %w", op, err)
@@ -53,7 +53,7 @@ func (s *Storage) GetUser(username string) (*entity.User, error) {
 	user, err := s.getEntity(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return user, UserNotFound
+			return user, ErrUserNotFound
 		}
 
 		return user, fmt.Errorf("%s: %w", op, err)
@@ -74,7 +74,7 @@ func (s *Storage) GetUserId(username string) (uint32, error) {
 	err = smtp.QueryRow(username).Scan(&id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return id, UserNotFound
+			return id, ErrUserNotFound
 		}
 
 		return id, fmt.Errorf("%s: %w", op, err)
@@ -83,13 +83,13 @@ func (s *Storage) GetUserId(username string) (uint32, error) {
 	return id, nil
 }
 
-func (s *Storage) ListUsers() []*entity.User {
+func (s *Storage) ListUsers() ([]*entity.User, error) {
 	const op = "storage.sqlite.ListUsers"
 	list := make([]*entity.User, 0, 10)
 
 	rows, err := s.db.Query("SELECT id, username, password, active, ttl, updated FROM user")
 	if err != nil {
-		return list
+		return list, fmt.Errorf("%s: %w", op, err)
 	}
 
 	for rows.Next() {
@@ -99,7 +99,7 @@ func (s *Storage) ListUsers() []*entity.User {
 		}
 	}
 
-	return list
+	return list, nil
 }
 
 func (s *Storage) ActivateUser(username string) error {
