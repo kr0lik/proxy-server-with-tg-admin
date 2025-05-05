@@ -1,0 +1,62 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Build golangci-lint
+        run: make build
+
+      - run: ./golangci-lint
+
+      - run: ./golangci-lint fmt
+      - run: ./golangci-lint fmt --diff
+      - run: cat cmd/golangci-lint/main.go | ./golangci-lint fmt --stdin
+
+      - run: ./golangci-lint cache
+      - run: ./golangci-lint cache status
+      - run: ./golangci-lint cache clean
+
+      - run: ./golangci-lint completion
+      - run: ./golangci-lint completion bash
+      - run: ./golangci-lint completion bash --no-descriptions
+      - run: ./golangci-lint completion zsh
+      - run: ./golangci-lint completion zsh --no-descriptions
+      - run: ./golangci-lint completion fish
+      - run: ./golangci-lint completion fish --no-descriptions
+      - run: ./golangci-lint completion powershell
+      - run: ./golangci-lint completion powershell --no-descriptions
+
+      - run: ./golangci-lint config
+      - run: ./golangci-lint config path
+      - run: ./golangci-lint config path --json
+      - run: ./golangci-lint config verify --schema jsonschema/golangci.next.jsonschema.json
+
+      - run: ./golangci-lint help
+      - run: ./golangci-lint help linters
+      - run: ./golangci-lint help linters --json
+      - run: ./golangci-lint help formatters
+      - run: ./golangci-lint help formatters --json
+      - run: ./golangci-lint linters
+      - run: ./golangci-lint linters --json
+      - run: ./golangci-lint formatters
+      - run: ./golangci-lint formatters --json
+      - run: ./golangci-lint version
+      - run: ./golangci-lint version --short
+      - run: ./golangci-lint version --debug
+      - run: ./golangci-lint version --json
+      - run: ./golangci-lint version --json --debug
