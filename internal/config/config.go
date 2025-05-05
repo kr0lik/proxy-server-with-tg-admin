@@ -76,7 +76,7 @@ func MustLoad() *Config {
 	}
 
 	if _, err := os.Stat(sqlitePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(sqlitePath, os.ModePerm); err != nil {
+		if err := os.MkdirAll(sqlitePath, 0o750); err != nil {
 			panic(fmt.Errorf("could not create sqlite path: %w", err))
 		}
 	}

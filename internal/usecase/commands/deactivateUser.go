@@ -12,8 +12,8 @@ func (c *StopUser) Id() string {
 	return "deactivate"
 }
 
-func (c *StopUser) Arguments() string {
-	return "{username}"
+func (c *StopUser) Arguments() []string {
+	return []string{usernameArg}
 }
 
 func (c *StopUser) Run(args ...string) (string, error) {

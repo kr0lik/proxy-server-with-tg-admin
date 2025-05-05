@@ -14,8 +14,8 @@ func (c *GetStatistic) Id() string {
 	return "stat"
 }
 
-func (c *GetStatistic) Arguments() string {
-	return "{username}"
+func (c *GetStatistic) Arguments() []string {
+	return []string{usernameArg}
 }
 
 func (c *GetStatistic) Run(args ...string) (string, error) {

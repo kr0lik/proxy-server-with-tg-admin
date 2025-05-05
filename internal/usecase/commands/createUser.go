@@ -15,8 +15,8 @@ func (c *CreateUser) Id() string {
 	return "create"
 }
 
-func (c *CreateUser) Arguments() string {
-	return "{username} [password] [ttl]"
+func (c *CreateUser) Arguments() []string {
+	return []string{usernameArg, "[password]", "[ttl]"}
 }
 
 func (c *CreateUser) Run(args ...string) (string, error) {
@@ -28,7 +28,7 @@ func (c *CreateUser) Run(args ...string) (string, error) {
 		username = args[0]
 	}
 
-	password := helper.PasswordGenerate(len([]rune(username)))
+	password := helper.PasswordGenerate(len([]byte(username)))
 	ttl := time.Now().Add(entity.DefaultUserTtl)
 
 	secondInput := ""

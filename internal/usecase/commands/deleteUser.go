@@ -12,8 +12,8 @@ func (c *DeleteUser) Id() string {
 	return "delete"
 }
 
-func (c *DeleteUser) Arguments() string {
-	return "{username}"
+func (c *DeleteUser) Arguments() []string {
+	return []string{usernameArg}
 }
 
 func (c *DeleteUser) Run(args ...string) (string, error) {
@@ -28,6 +28,7 @@ func (c *DeleteUser) Run(args ...string) (string, error) {
 	if err := c.storage.DeleteUser(username); err != nil {
 		return "", err
 	}
+
 	if err := c.storage.DeleteUserStat(username); err != nil {
 		return "", err
 	}

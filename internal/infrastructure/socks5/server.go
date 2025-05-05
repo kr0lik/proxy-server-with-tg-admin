@@ -2,6 +2,7 @@ package socks5
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/things-go/go-socks5"
 	"log/slog"
@@ -47,7 +48,7 @@ func GetServer(statisticTracker *statistic.Tracker, authenticator *auth.Authenti
 				}
 			}
 
-			return nil, fmt.Errorf("bad credentials")
+			return nil, errors.New("bad credentials")
 		}),
 	)
 }

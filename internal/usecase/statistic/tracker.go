@@ -7,6 +7,7 @@ import (
 )
 
 const syncPeriod = time.Second * 30
+const consumeIncomeChBufferSize = 10000
 
 type StorageInterface interface {
 	AddStat(userId uint32, bytesIn, bytesOut uint64) error
@@ -30,7 +31,7 @@ type Tracker struct {
 
 func New(storage StorageInterface, logger *slog.Logger) *Tracker {
 	return &Tracker{
-		consumeIncomeCh: make(chan incomeStat, 10000),
+		consumeIncomeCh: make(chan incomeStat, consumeIncomeChBufferSize),
 		consumeStopCh:   make(chan struct{}),
 		syncStopCh:      make(chan struct{}),
 		storage:         storage,
@@ -39,14 +40,14 @@ func New(storage StorageInterface, logger *slog.Logger) *Tracker {
 }
 
 func (t *Tracker) Start() {
-	t.wg.Add(2)
-
+	t.wg.Add(1)
 	go func() {
 		defer t.wg.Done()
 
 		t.consume()
 	}()
 
+	t.wg.Add(1)
 	go func() {
 		defer t.wg.Done()
 
@@ -69,6 +70,7 @@ func (t *Tracker) Stop() {
 func (t *Tracker) Track(userId uint32, in uint64, out uint64) {
 	if userId == 0 {
 		t.logger.Warn("Statistic tracker", "userId", userId)
+
 		return
 	}
 
@@ -99,6 +101,7 @@ func (t *Tracker) consume() {
 				default:
 					t.logger.Warn("Statistic tracker consume stopped")
 					close(t.syncStopCh)
+
 					return
 				}
 			}
@@ -118,6 +121,7 @@ func (t *Tracker) sync() {
 			t.commit()
 		case <-t.syncStopCh:
 			t.logger.Warn("Statistic tracker sync stopped")
+
 			return
 		}
 	}
@@ -125,18 +129,38 @@ func (t *Tracker) sync() {
 
 func (t *Tracker) cache(userId uint32, in, out uint64) {
 	val, _ := t.stats.LoadOrStore(userId, &statistic{})
-	st := val.(*statistic)
+	st, ok := val.(*statistic)
+	if !ok {
+		t.logger.Error("Statistic tracker: invalid statistic type in stat map")
+
+		return
+	}
+
 	st.Increment(in, out)
 }
 
 func (t *Tracker) commit() {
 	t.stats.Range(func(key, value any) bool {
-		userId := key.(uint32)
-		stat := value.(*statistic)
-		in, out := stat.GetAndClean()
+		userId, ok := key.(uint32)
+		if !ok {
+			t.logger.Error("Statistic tracker: invalid userId type in stat map")
+
+			return true
+		}
+
+		st, ok := value.(*statistic)
+
+		if !ok {
+			t.logger.Error("Statistic tracker: invalid statistic type in stat map")
+
+			return true
+		}
+
+		in, out := st.GetAndClean()
 
 		if in == 0 && out == 0 {
 			t.stats.Delete(userId)
+
 			return true
 		}
 
@@ -144,7 +168,7 @@ func (t *Tracker) commit() {
 
 		if err := t.storage.AddStat(userId, in, out); err != nil {
 			t.logger.Debug("Statistic tracker dump", "err", err)
-			stat.Increment(in, out)
+			st.Increment(in, out)
 		}
 
 		return true

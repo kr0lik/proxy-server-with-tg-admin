@@ -15,8 +15,8 @@ func (c *ActivateUser) Id() string {
 	return "activate"
 }
 
-func (c *ActivateUser) Arguments() string {
-	return "{username} [ttl]"
+func (c *ActivateUser) Arguments() []string {
+	return []string{usernameArg, "[ttl]"}
 }
 
 func (c *ActivateUser) Run(args ...string) (string, error) {
@@ -35,6 +35,7 @@ func (c *ActivateUser) Run(args ...string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		ttl = t
 	}
 

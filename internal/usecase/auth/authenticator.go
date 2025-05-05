@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"fmt"
+	"errors"
 	"log/slog"
 	"proxy-server-with-tg-admin/internal/entity"
 	"time"
@@ -39,11 +39,13 @@ func (a *Authenticator) Authenticate(username, password string) bool {
 	user, err := a.storage.GetUser(username)
 	if err != nil {
 		a.logger.Debug("Auth authenticate fail", "GetUser", err)
+
 		return false
 	}
 
 	if user.Password != password {
 		a.logger.Debug("Auth authenticate fail", "user.Password", user.Password)
+
 		return false
 	}
 
@@ -54,10 +56,6 @@ func (a *Authenticator) Authenticate(username, password string) bool {
 	a.cache.update(user.Username, user.Password, user.ID, user.Ttl)
 
 	return true
-}
-
-func (a *Authenticator) Revoke(username string) {
-	a.cache.forget(username)
 }
 
 func (a *Authenticator) GetUserId(username, password string) (uint32, error) {
@@ -77,7 +75,7 @@ func (a *Authenticator) GetUserId(username, password string) (uint32, error) {
 	}
 
 	if user.Password != password {
-		return 0, fmt.Errorf("ivalid password")
+		return 0, errors.New("invalid password")
 	}
 
 	return user.ID, nil
@@ -86,11 +84,13 @@ func (a *Authenticator) GetUserId(username, password string) (uint32, error) {
 func (a *Authenticator) validate(user *entity.User) bool {
 	if !user.Active {
 		a.logger.Debug("Auth validate fail", "user.Active", user.Active)
+
 		return false
 	}
 
 	if user.Ttl.Unix() > 0 && user.Ttl.Unix() < time.Now().Unix() {
 		a.logger.Debug("Auth validate fail", "user.Ttl", user.Ttl.Format(time.DateTime))
+
 		return false
 	}
 

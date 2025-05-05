@@ -13,8 +13,8 @@ func (c *UpdatePassword) Id() string {
 	return "password"
 }
 
-func (c *UpdatePassword) Arguments() string {
-	return "{username} [password]"
+func (c *UpdatePassword) Arguments() []string {
+	return []string{usernameArg, "[password]"}
 }
 
 func (c *UpdatePassword) Run(args ...string) (string, error) {
@@ -26,7 +26,7 @@ func (c *UpdatePassword) Run(args ...string) (string, error) {
 		username = args[0]
 	}
 
-	password := helper.PasswordGenerate(len(username))
+	password := helper.PasswordGenerate(len([]byte(username)))
 
 	if len(args) > 1 {
 		password = args[1]

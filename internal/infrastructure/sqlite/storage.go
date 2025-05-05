@@ -28,6 +28,7 @@ func New(storagePath, filename string, logger *slog.Logger) (*Storage, error) {
 
 	if err = s.init(); err != nil {
 		s.Close()
+
 		return nil, fmt.Errorf("sqlite.init: %w", err)
 	}
 

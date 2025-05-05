@@ -19,7 +19,7 @@ type User struct {
 	Password     string    `json:"password"`
 	LimitSpeed   uint32    `json:"limitSpeed"`
 	LimitTraffic uint32    `json:"limitTraffic"`
-	LimitType    LimitType `json:"LimitType"`
+	LimitType    LimitType `json:"limitType"`
 	Active       bool      `json:"active"`
 	Ttl          time.Time `json:"ttl"`
 	Updated      time.Time `json:"updated"`

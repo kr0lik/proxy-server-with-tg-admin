@@ -13,8 +13,8 @@ func (c *ListUsers) Id() string {
 	return "users"
 }
 
-func (c *ListUsers) Arguments() string {
-	return ""
+func (c *ListUsers) Arguments() []string {
+	return []string{}
 }
 
 func (c *ListUsers) Run(args ...string) (string, error) {
@@ -32,7 +32,7 @@ func (c *ListUsers) Run(args ...string) (string, error) {
 			active = "⚫"
 		}
 
-		res += fmt.Sprintf("%s %s with ttl to %s\n", user.Username, active, helper.TtlToString(user.Ttl))
+		res += fmt.Sprintf("%s %s with ttl to %s\n", active, user.Username, helper.TtlToString(user.Ttl))
 	}
 
 	if res == "" {

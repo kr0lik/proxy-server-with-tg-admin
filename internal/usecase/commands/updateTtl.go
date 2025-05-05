@@ -15,8 +15,8 @@ func (c *UpdateTtl) Id() string {
 	return "ttl"
 }
 
-func (c *UpdateTtl) Arguments() string {
-	return "{username} {ttl}"
+func (c *UpdateTtl) Arguments() []string {
+	return []string{usernameArg, "[ttl]"}
 }
 
 func (c *UpdateTtl) Run(args ...string) (string, error) {
@@ -35,6 +35,7 @@ func (c *UpdateTtl) Run(args ...string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		ttl = t
 	}
 

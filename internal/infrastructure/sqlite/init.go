@@ -17,6 +17,7 @@ func (s *Storage) init() error {
     	ttl TIMESTAMP DEFAULT 0 NOT NULL,
     	updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 	); CREATE UNIQUE INDEX IF NOT EXISTS username_uniq_idx ON user(username);`)
+	defer stmt.Close()
 
 	if err != nil {
 		return fmt.Errorf("sql.prepare user: %w", err)
@@ -35,6 +36,7 @@ func (s *Storage) init() error {
     	days_active INTEGER DEFAULT 0 NOT NULL,
     	updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 	)`)
+	defer stmt.Close()
 
 	if err != nil {
 		return fmt.Errorf("sql.prepare user_stat: %w", err)

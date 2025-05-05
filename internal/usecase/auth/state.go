@@ -54,13 +54,6 @@ func (c *cache) get(username string) (state, bool) {
 	return *item, true
 }
 
-func (c *cache) forget(username string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	delete(c.data, username)
-}
-
 func (c *cache) extendTTLIfNeeded(state *state) {
 	if state.ttl.Add(time.Minute).Before(time.Now()) {
 		return
@@ -80,28 +73,12 @@ func (c *cache) checkup() {
 	for range ticker.C {
 		var toForget []string
 
-		now := time.Now()
-
 		c.mu.RLock()
-
 		for username, state := range c.data {
-			if state.ttl.Before(now) {
-				c.logger.Debug("Auth state checkup", "ttl expired", username)
+			if c.isNeedForget(username, state) {
 				toForget = append(toForget, username)
-			} else if !state.userTtl.IsZero() && state.userTtl.Before(now) {
-				c.logger.Debug("Auth state checkup", "userTtl expired", username)
-				toForget = append(toForget, username)
-			} else {
-				user, err := c.storage.GetUser(username)
-				if err == nil {
-					if !user.Active || user.Password != state.userPassword || user.Ttl != state.userTtl {
-						c.logger.Debug("Auth state checkup", "user changed", username)
-						toForget = append(toForget, username)
-					}
-				}
 			}
 		}
-
 		c.mu.RUnlock()
 
 		if len(toForget) > 0 {
@@ -112,4 +89,31 @@ func (c *cache) checkup() {
 			c.mu.Unlock()
 		}
 	}
+}
+
+func (c *cache) isNeedForget(username string, state *state) bool {
+	now := time.Now()
+
+	if state.ttl.Before(now) {
+		c.logger.Debug("Auth state checkup", "ttl expired", username)
+
+		return true
+	}
+
+	if !state.userTtl.IsZero() && state.userTtl.Before(now) {
+		c.logger.Debug("Auth state checkup", "userTtl expired", username)
+
+		return true
+	}
+
+	user, err := c.storage.GetUser(username)
+	if err == nil {
+		if !user.Active || user.Password != state.userPassword || user.Ttl != state.userTtl {
+			c.logger.Debug("Auth state checkup", "user changed", username)
+
+			return true
+		}
+	}
+
+	return false
 }

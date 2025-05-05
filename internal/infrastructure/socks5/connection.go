@@ -1,6 +1,7 @@
 package socks5
 
 import (
+	"fmt"
 	"log/slog"
 	"net"
 	"proxy-server-with-tg-admin/internal/usecase/statistic"
@@ -25,12 +26,22 @@ func (c *connection) Close() error {
 
 func (c *connection) Read(b []byte) (int, error) {
 	n, err := c.Conn.Read(b)
+	if n < 0 {
+		return n, fmt.Errorf("unexpected negative byte count: %d", n)
+	}
+
 	c.BytesRead += uint64(n)
+
 	return n, err
 }
 
 func (c *connection) Write(b []byte) (int, error) {
 	n, err := c.Conn.Write(b)
+	if n < 0 {
+		return n, fmt.Errorf("unexpected negative byte count: %d", n)
+	}
+
 	c.BytesWritten += uint64(n)
+
 	return n, err
 }

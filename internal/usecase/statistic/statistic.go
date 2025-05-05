@@ -17,10 +17,10 @@ func (s *statistic) Increment(in, out uint64) {
 	s.mu.Unlock()
 }
 
-func (s *statistic) GetAndClean() (oldIn, oldOut uint64) {
+func (s *statistic) GetAndClean() (uint64, uint64) {
 	s.mu.Lock()
-	oldIn = s.in
-	oldOut = s.out
+	oldIn := s.in
+	oldOut := s.out
 	s.in = 0
 	s.out = 0
 	s.mu.Unlock()

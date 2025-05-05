@@ -49,7 +49,7 @@ func getSupportedCommands(commands *commands.List) string {
 	res := "Supported commands:\n"
 
 	for _, cmd := range commands.List() {
-		res += fmt.Sprintf("/%s %s\n", cmd.Id(), cmd.Arguments())
+		res += fmt.Sprintf("/%s %s\n", cmd.Id(), strings.Join(cmd.Arguments(), " "))
 	}
 
 	return res

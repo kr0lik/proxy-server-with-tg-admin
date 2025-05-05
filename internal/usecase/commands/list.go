@@ -9,6 +9,8 @@ import (
 var ErrUnknownCommand = errors.New("unknown command")
 var ErrUsernameRequired = errors.New("username required")
 
+const usernameArg = "{username}"
+
 type StorageInterface interface {
 	CreateUser(username, password string) (uint32, error)
 	ActivateUser(username string) error
@@ -23,7 +25,7 @@ type StorageInterface interface {
 
 type Cmd interface {
 	Id() string
-	Arguments() string
+	Arguments() []string
 	Run(args ...string) (string, error)
 }
 

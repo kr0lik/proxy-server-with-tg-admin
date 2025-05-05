@@ -26,6 +26,7 @@ func main() {
 	storage, err := sqlite.New(cfg.SqlitePath(), "server.db", logger)
 	if err != nil {
 		logger.Error("Failed to start storage", "err", err)
+
 		return
 	}
 	defer storage.Close()
@@ -35,24 +36,22 @@ func main() {
 	tgBot, err := telegram.GetTelegramBot(cfg.TelegramToken(), cfg.TelegramAdminId(), commands.New(storage))
 	if err != nil {
 		logger.Error("Failed to start telegram bot", "err", err)
+
 		return
 	}
+	defer tgBot.Stop()
 
 	go func() {
 		logger.Info("running telegram bot")
 		tgBot.Start()
 		logger.Info("telegram bot stopped")
 	}()
-	defer tgBot.Stop()
 
 	logger.Info("starting statistic tracker")
 
 	statisticTracker := statistic.New(storage, logger)
-	go func() {
-		logger.Info("running statistic tracker")
-		statisticTracker.Start()
-		logger.Info("statistic tracker stopped")
-	}()
+	logger.Info("running statistic tracker")
+	statisticTracker.Start()
 	defer statisticTracker.Stop()
 
 	done := make(chan os.Signal, 1)

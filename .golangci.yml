@@ -1,0 +1,27 @@
+version: "2"
+
+linters:
+  default: all
+
+  disable:
+    - depguard
+    - funcorder
+    - funlen
+    - ireturn
+    - godot
+    - godox
+    - lll
+    - mnd
+    - varnamelen
+    - revive
+    - wsl
+    # To enable
+    - err113
+    - errcheck
+    - wrapcheck
+    - exhaustruct
+    - staticcheck
+
+  settings:
+    wsl:
+      allow-cuddle-declarations: false

@@ -11,7 +11,7 @@ import (
 func (s *Storage) AddStat(userId uint32, bytesIn, bytesOut uint64) error {
 	const op = "storage.sqlite.AddStat"
 
-	smtp, err := s.db.Prepare(`
+	stmt, err := s.db.Prepare(`
 INSERT INTO  user_stat(user_id, traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated) VALUES(?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
 ON CONFLICT(user_id) DO UPDATE SET
 traffic_in_total=traffic_in_total + excluded.traffic_in_total,
@@ -32,11 +32,13 @@ days_active=CASE
 	ELSE days_active
 END,
 updated = CURRENT_TIMESTAMP`)
+	defer stmt.Close()
+
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	if _, err := smtp.Exec(userId, bytesIn, bytesOut, bytesIn, bytesOut); err != nil {
+	if _, err := stmt.Exec(userId, bytesIn, bytesOut, bytesIn, bytesOut); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -55,7 +57,9 @@ func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	smtp, err := s.db.Prepare("SELECT traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated FROM user_stat WHERE user_id = ?")
+	stmt, err := s.db.Prepare("SELECT traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated FROM user_stat WHERE user_id = ?")
+	defer stmt.Close()
+
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -64,10 +68,10 @@ func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 	userStat.UserID = userId
 	userStat.Updated = time.Time{}
 
-	err = smtp.QueryRow(userId).Scan(&userStat.TrafficInDay, &userStat.TrafficOutDay, &userStat.TrafficInTotal, &userStat.TrafficOutTotal, &userStat.DaysActive, &userStat.Updated)
+	err = stmt.QueryRow(userId).Scan(&userStat.TrafficInDay, &userStat.TrafficOutDay, &userStat.TrafficInTotal, &userStat.TrafficOutTotal, &userStat.DaysActive, &userStat.Updated)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return userStat, nil
 		}
 
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -79,12 +83,14 @@ func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 func (s *Storage) DeleteUserStat(username string) error {
 	const op = "storage.sqlite.DeleteUserStat"
 
-	smtp, err := s.db.Prepare("DELETE FROM user_stat WHERE username = ?")
+	stmt, err := s.db.Prepare("DELETE FROM user_stat WHERE username = ?")
+	defer stmt.Close()
+
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = smtp.Exec(username)
+	_, err = stmt.Exec(username)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
