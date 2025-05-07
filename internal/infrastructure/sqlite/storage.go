@@ -37,7 +37,7 @@ func New(storagePath, filename string, logger *slog.Logger) (*Storage, error) {
 
 func (s *Storage) Close() {
 	if closErr := s.db.Close(); closErr != nil {
-		s.logger.Error("sqlite.close", "err", closErr)
+		s.logger.Error("Sqlite.bd", "close", closErr)
 	}
 
 	s.logger.Debug("Sqlite db closed")

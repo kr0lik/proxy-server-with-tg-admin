@@ -7,19 +7,20 @@ import (
 	"time"
 )
 
-type ActivateUser struct {
+type activateUser struct {
 	storage StorageInterface
 }
 
-func (c *ActivateUser) Id() string {
+func (c *activateUser) Id() string {
 	return "activate"
 }
 
-func (c *ActivateUser) Arguments() []string {
+func (c *activateUser) Arguments() []string {
 	return []string{usernameArg, "[ttl]"}
 }
 
-func (c *ActivateUser) Run(args ...string) (string, error) {
+func (c *activateUser) Run(args ...string) (string, error) {
+	const op = "commands.activateUser.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -33,18 +34,18 @@ func (c *ActivateUser) Run(args ...string) (string, error) {
 	if len(args) > 1 {
 		t, err := helper.StringToTtl(args[1])
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("%s: %w", op, err)
 		}
 
 		ttl = t
 	}
 
 	if err := c.storage.ActivateUser(username); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := c.storage.UpdateTtl(username, ttl); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return fmt.Sprintf("User %s activated with ttl to %s", username, helper.TtlToString(ttl)), nil

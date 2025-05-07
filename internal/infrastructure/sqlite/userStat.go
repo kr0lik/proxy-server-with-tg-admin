@@ -48,7 +48,7 @@ updated = CURRENT_TIMESTAMP`)
 func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 	const op = "storage.sqlite.GetStatistic"
 
-	userId, err := s.GetUserId(username)
+	userId, err := s.getUserId(username)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrUserNotFound

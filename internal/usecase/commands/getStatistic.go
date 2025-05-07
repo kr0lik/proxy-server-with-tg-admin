@@ -6,19 +6,20 @@ import (
 	"time"
 )
 
-type GetStatistic struct {
+type getStatistic struct {
 	storage StorageInterface
 }
 
-func (c *GetStatistic) Id() string {
+func (c *getStatistic) Id() string {
 	return "stat"
 }
 
-func (c *GetStatistic) Arguments() []string {
+func (c *getStatistic) Arguments() []string {
 	return []string{usernameArg}
 }
 
-func (c *GetStatistic) Run(args ...string) (string, error) {
+func (c *getStatistic) Run(args ...string) (string, error) {
+	const op = "commands.getStatistic.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -29,7 +30,7 @@ func (c *GetStatistic) Run(args ...string) (string, error) {
 
 	userStat, err := c.storage.GetStatistic(username)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	updated := "-"

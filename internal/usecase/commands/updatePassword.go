@@ -5,19 +5,20 @@ import (
 	"proxy-server-with-tg-admin/internal/helper"
 )
 
-type UpdatePassword struct {
+type updatePassword struct {
 	storage StorageInterface
 }
 
-func (c *UpdatePassword) Id() string {
+func (c *updatePassword) Id() string {
 	return "password"
 }
 
-func (c *UpdatePassword) Arguments() []string {
+func (c *updatePassword) Arguments() []string {
 	return []string{usernameArg, "[password]"}
 }
 
-func (c *UpdatePassword) Run(args ...string) (string, error) {
+func (c *updatePassword) Run(args ...string) (string, error) {
+	const op = "commands.updatePassword.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -26,14 +27,14 @@ func (c *UpdatePassword) Run(args ...string) (string, error) {
 		username = args[0]
 	}
 
-	password := helper.PasswordGenerate(len([]byte(username)))
+	password := helper.PasswordGenerate(len([]rune(username)))
 
 	if len(args) > 1 {
 		password = args[1]
 	}
 
 	if err := c.storage.UpdatePassword(username, password); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return fmt.Sprintf("New credentials: \"%s:%s\"", username, password), nil

@@ -1,23 +1,22 @@
 package auth
 
 import (
-	"errors"
 	"log/slog"
 	"proxy-server-with-tg-admin/internal/entity"
 	"time"
 )
 
-type UserStorageInterface interface {
+type StorageInterface interface {
 	GetUser(username string) (*entity.User, error)
 }
 
 type Authenticator struct {
-	storage UserStorageInterface
+	storage StorageInterface
 	cache   *cache
 	logger  *slog.Logger
 }
 
-func New(storage UserStorageInterface, logger *slog.Logger) *Authenticator {
+func New(storage StorageInterface, logger *slog.Logger) *Authenticator {
 	cache := &cache{
 		data:    make(map[string]*state),
 		storage: storage,
@@ -29,56 +28,33 @@ func New(storage UserStorageInterface, logger *slog.Logger) *Authenticator {
 	return &Authenticator{storage: storage, cache: cache, logger: logger}
 }
 
-func (a *Authenticator) Authenticate(username, password string) bool {
-	state, ok := a.cache.get(username)
+func (a *Authenticator) Authenticate(username, password string) uint32 {
+	st, ok := a.cache.get(username)
 
-	if ok && state.userPassword == password {
-		return true
+	if ok && st.userPassword == password {
+		return st.userId
 	}
 
 	user, err := a.storage.GetUser(username)
 	if err != nil {
 		a.logger.Debug("Auth authenticate fail", "GetUser", err)
 
-		return false
+		return 0
 	}
 
 	if user.Password != password {
 		a.logger.Debug("Auth authenticate fail", "user.Password", user.Password)
 
-		return false
+		return 0
 	}
 
 	if !a.validate(user) {
-		return false
+		return 0
 	}
 
 	a.cache.update(user.Username, user.Password, user.ID, user.Ttl)
 
-	return true
-}
-
-func (a *Authenticator) GetUserId(username, password string) (uint32, error) {
-	state, ok := a.cache.get(username)
-
-	if ok && state.userPassword == password {
-		return state.userId, nil
-	}
-
-	if !ok {
-		a.logger.Warn("Auth cache missed", "GetUserId", username)
-	}
-
-	user, err := a.storage.GetUser(username)
-	if err != nil {
-		return 0, err
-	}
-
-	if user.Password != password {
-		return 0, errors.New("invalid password")
-	}
-
-	return user.ID, nil
+	return user.ID
 }
 
 func (a *Authenticator) validate(user *entity.User) bool {

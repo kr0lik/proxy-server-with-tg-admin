@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func GetTelegramBot(token string, adminId int64, commands *commands.List) (*tele.Bot, error) {
+func MakeBot(token string, adminId int64, commands *commands.List) (*tele.Bot, error) {
 	conf := tele.Settings{
 		Token: token,
 	}

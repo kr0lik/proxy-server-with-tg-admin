@@ -7,19 +7,20 @@ import (
 	"time"
 )
 
-type UpdateTtl struct {
+type updateTtl struct {
 	storage StorageInterface
 }
 
-func (c *UpdateTtl) Id() string {
+func (c *updateTtl) Id() string {
 	return "ttl"
 }
 
-func (c *UpdateTtl) Arguments() []string {
+func (c *updateTtl) Arguments() []string {
 	return []string{usernameArg, "[ttl]"}
 }
 
-func (c *UpdateTtl) Run(args ...string) (string, error) {
+func (c *updateTtl) Run(args ...string) (string, error) {
+	const op = "commands.updateTtl.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -33,14 +34,14 @@ func (c *UpdateTtl) Run(args ...string) (string, error) {
 	if len(args) > 1 {
 		t, err := helper.StringToTtl(args[1])
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("%s: %w", op, err)
 		}
 
 		ttl = t
 	}
 
 	if err := c.storage.UpdateTtl(username, ttl); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return fmt.Sprintf("User %s ttl updated to %s", username, helper.TtlToString(ttl)), nil

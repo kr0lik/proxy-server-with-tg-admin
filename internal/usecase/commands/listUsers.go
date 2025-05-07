@@ -5,22 +5,24 @@ import (
 	"proxy-server-with-tg-admin/internal/helper"
 )
 
-type ListUsers struct {
+type listUsers struct {
 	storage StorageInterface
 }
 
-func (c *ListUsers) Id() string {
+func (c *listUsers) Id() string {
 	return "users"
 }
 
-func (c *ListUsers) Arguments() []string {
+func (c *listUsers) Arguments() []string {
 	return []string{}
 }
 
-func (c *ListUsers) Run(args ...string) (string, error) {
+func (c *listUsers) Run(args ...string) (string, error) {
+	const op = "commands.listUsers.Run"
+
 	list, err := c.storage.ListUsers()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	res := ""

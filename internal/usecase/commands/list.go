@@ -36,14 +36,14 @@ type List struct {
 func New(storage StorageInterface) *List {
 	return &List{
 		list: []Cmd{
-			&CreateUser{storage: storage},
-			&ActivateUser{storage: storage},
-			&StopUser{storage: storage},
-			&UpdatePassword{storage: storage},
-			&UpdateTtl{storage: storage},
-			&ListUsers{storage: storage},
-			&GetStatistic{storage: storage},
-			&DeleteUser{storage: storage},
+			&createUser{storage: storage},
+			&activateUser{storage: storage},
+			&deactivateUser{storage: storage},
+			&updatePassword{storage: storage},
+			&updateTtl{storage: storage},
+			&listUsers{storage: storage},
+			&getStatistic{storage: storage},
+			&deleteUser{storage: storage},
 		},
 	}
 }

@@ -12,6 +12,7 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 var ErrUserExists = errors.New("user already exists")
+var ErrCantReturnId = errors.New("cant return id")
 
 type scanRow interface {
 	Scan(dest ...any) error
@@ -37,11 +38,11 @@ func (s *Storage) CreateUser(username, password string) (uint32, error) {
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("%s: failed to get last insert id: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	if id < 0 || id > math.MaxUint32 {
-		return 0, fmt.Errorf("id %d is out of uint32 range", id)
+		return 0, fmt.Errorf("%s: id out of range %d", op, id)
 	}
 
 	return uint32(id), nil
@@ -70,8 +71,8 @@ func (s *Storage) GetUser(username string) (*entity.User, error) {
 	return user, nil
 }
 
-func (s *Storage) GetUserId(username string) (uint32, error) {
-	const op = "storage.sqlite.GetUserId"
+func (s *Storage) getUserId(username string) (uint32, error) {
+	const op = "storage.sqlite.getUserId"
 	var id uint32
 
 	stmt, err := s.db.Prepare("SELECT id FROM user WHERE username = ?")
@@ -94,7 +95,10 @@ func (s *Storage) GetUserId(username string) (uint32, error) {
 
 func (s *Storage) ListUsers() ([]*entity.User, error) {
 	const op = "storage.sqlite.ListUsers"
-	list := make([]*entity.User, 0, 10)
+
+	userCount, _ := s.countUsers()
+
+	list := make([]*entity.User, 0, userCount)
 
 	rows, err := s.db.Query("SELECT id, username, password, active, ttl, updated FROM user")
 	if err != nil {
@@ -207,17 +211,44 @@ func (s *Storage) DeleteUser(username string) error {
 }
 
 func (s *Storage) getEntity(row scanRow) (*entity.User, error) {
-	user := &entity.User{}
+	const op = "storage.sqlite.getEntity"
 	var ttl int64
+
+	user := &entity.User{}
 
 	err := row.Scan(&user.ID, &user.Username, &user.Password, &user.Active, &ttl, &user.Updated)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if time.Unix(ttl, 0).Unix() > 86400 {
+	const possibleZeroTime = 86400
+
+	if time.Unix(ttl, 0).Unix() > possibleZeroTime {
 		user.Ttl = time.Unix(ttl, 0)
 	}
 
 	return user, nil
+}
+
+func (s *Storage) countUsers() (int, error) {
+	const op = "storage.sqlite.countUsers"
+
+	count := 0
+
+	stmt, err := s.db.Prepare("SELECT COUNT(id) FROM user")
+	if err != nil {
+		return count, fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow().Scan(&count)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return count, ErrUserNotFound
+		}
+
+		return count, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return count, nil
 }

@@ -5,23 +5,53 @@ linters:
 
   disable:
     - depguard
+    - exhaustruct
     - funcorder
     - funlen
     - ireturn
     - godot
     - godox
     - lll
-    - mnd
-    - varnamelen
     - revive
+    - varnamelen
     - wsl
-    # To enable
-    - err113
-    - errcheck
-    - wrapcheck
-    - exhaustruct
-    - staticcheck
 
-  settings:
-    wsl:
-      allow-cuddle-declarations: false
+  exclusions:
+    rules:
+      - path: internal/infrastructure/sqlite/user.go
+        text: "id out of range"
+        linters:
+          - err113
+      - path: internal/infrastructure/socks5/connection.go
+        text: "negative byte count"
+        linters:
+          - err113
+      - path: internal/helper/ttl.go
+        text: "empty input"
+        linters:
+          - err113
+      - path: internal/usecase/auth/authenticator.go
+        text: "invalid password"
+        linters:
+          - err113
+      - path: internal/helper/uint32.go
+        text: "StringToUint32: invalid digit %q in string"
+        linters:
+          - err113
+      - path: internal/infrastructure/sqlite/
+        text: "stmt.Close"
+        linters:
+          - errcheck
+          - staticcheck
+      - path: internal/infrastructure/socks5/server.go
+        text: "Error return value of `l.Close` is not checked"
+        linters:
+          - errcheck
+      - path: internal/usecase/commands/list.go
+        text: "Get returns interface"
+        linters:
+          - ireturn
+      - path: internal/usecase/commands/createUser.go
+        text: "Magic number: 2"
+        linters:
+          - mnd

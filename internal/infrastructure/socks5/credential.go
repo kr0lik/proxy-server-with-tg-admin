@@ -11,5 +11,9 @@ type CredentialStore struct {
 }
 
 func (c *CredentialStore) Valid(username, password, userAddr string) bool {
+	return c.authenticator.Authenticate(username, password) != 0
+}
+
+func (c *CredentialStore) GetUserId(username, password, userAddr string) uint32 {
 	return c.authenticator.Authenticate(username, password)
 }

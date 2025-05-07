@@ -1,13 +1,15 @@
 package helper
 
 import (
-	"errors"
+	"fmt"
 	"time"
 )
 
 func StringToTtl(input string) (time.Time, error) {
+	const op = "helper.StringToTtl"
+
 	if input == "" {
-		return time.Time{}, errors.New("empty string")
+		return time.Time{}, fmt.Errorf("%s: empty input", op)
 	}
 
 	if input == "0" {
@@ -16,7 +18,7 @@ func StringToTtl(input string) (time.Time, error) {
 
 	dur, err := time.ParseDuration(input)
 	if err != nil {
-		return time.Time{}, err
+		return time.Time{}, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return time.Now().Add(dur), nil

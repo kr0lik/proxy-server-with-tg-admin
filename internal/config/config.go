@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	Dev  = "dev"
-	Prod = "prod"
+	EnvDev            = "dev"
+	EnvProd           = "prod"
+	defaultSocks5Port = 1080
 )
 
 type Config struct {
@@ -46,17 +47,17 @@ func MustLoad() *Config {
 	var telegramBotToken string
 	var telegramAdminId int64
 
-	flag.UintVar(&portSocks5, "port-socks5", 1080, "SOCKS5 server port")
-	flag.StringVar(&env, "env", Prod, "Application environment: dev or prod")
+	flag.UintVar(&portSocks5, "port-socks5", defaultSocks5Port, "SOCKS5 server port")
+	flag.StringVar(&env, "env", EnvProd, "Application environment: EnvDev or EnvProd")
 	flag.StringVar(&sqlitePath, "sqlite-path", "./.data", "Storage path")
 	flag.StringVar(&telegramBotToken, "telegram-bot-token", "", "Telegram bot token")
 	flag.Int64Var(&telegramAdminId, "telegram-admin-id", 0, "Telegram admin id")
 	flag.Parse()
 
 	switch env {
-	case Dev, Prod:
+	case EnvDev, EnvProd:
 	default:
-		panic(fmt.Sprintf("Invalid env: %s (must be %s or %s)", env, Dev, Prod))
+		panic(fmt.Sprintf("Invalid env: %s (must be %s or %s)", env, EnvDev, EnvProd))
 	}
 
 	if portSocks5 == 0 {
@@ -76,7 +77,8 @@ func MustLoad() *Config {
 	}
 
 	if _, err := os.Stat(sqlitePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(sqlitePath, 0o750); err != nil {
+		const folderPerm = 0o750
+		if err := os.MkdirAll(sqlitePath, folderPerm); err != nil {
 			panic(fmt.Errorf("could not create sqlite path: %w", err))
 		}
 	}

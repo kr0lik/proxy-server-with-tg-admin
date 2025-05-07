@@ -3,6 +3,7 @@ module proxy-server-with-tg-admin
 go 1.24
 
 require (
+	github.com/kagadar/go-syncmap v0.0.0-20240106050619-1e72809805a4
 	github.com/things-go/go-socks5 v0.0.6
 	gopkg.in/telebot.v4 v4.0.0-beta.4
 	modernc.org/sqlite v1.37.0

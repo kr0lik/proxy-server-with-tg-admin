@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -19,9 +20,9 @@ func main() {
 	cfg := config.MustLoad()
 	logger := setupLogger(cfg.Env())
 
-	logger.Debug(cfg.Env(), "socks5 port", cfg.PortSocks5(), "db path", cfg.SqlitePath())
+	logger.Debug("starting", "env", cfg.Env(), "port", cfg.PortSocks5(), "db path", cfg.SqlitePath())
 
-	logger.Info("starting storage")
+	logger.Info("Storage starting")
 
 	storage, err := sqlite.New(cfg.SqlitePath(), "server.db", logger)
 	if err != nil {
@@ -31,9 +32,9 @@ func main() {
 	}
 	defer storage.Close()
 
-	logger.Info("starting telegram bot")
+	logger.Info("Telegram bot starting")
 
-	tgBot, err := telegram.GetTelegramBot(cfg.TelegramToken(), cfg.TelegramAdminId(), commands.New(storage))
+	tgBot, err := telegram.MakeBot(cfg.TelegramToken(), cfg.TelegramAdminId(), commands.New(storage))
 	if err != nil {
 		logger.Error("Failed to start telegram bot", "err", err)
 
@@ -42,35 +43,35 @@ func main() {
 	defer tgBot.Stop()
 
 	go func() {
-		logger.Info("running telegram bot")
+		logger.Info("Telegram bot running")
 		tgBot.Start()
-		logger.Info("telegram bot stopped")
+		logger.Info("Telegram bot stopped")
 	}()
 
-	logger.Info("starting statistic tracker")
+	logger.Info("Statistic tracker starting")
 
 	statisticTracker := statistic.New(storage, logger)
-	logger.Info("running statistic tracker")
+	logger.Info("Statistic tracker running")
 	statisticTracker.Start()
 	defer statisticTracker.Stop()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	logger.Info("starting socks5 server")
+	logger.Info("Socks5 server starting")
 
-	socks5Server := socks5.GetServer(statisticTracker, auth.New(storage, logger), logger)
+	socks5Server := socks5.New(statisticTracker, auth.New(storage, logger), logger)
+	defer socks5Server.Shutdown()
 
 	go func() {
 		serverAddr := fmt.Sprintf(":%d", cfg.PortSocks5())
-		logger.Info("running socks5 server", "on", serverAddr)
+		logger.Info("Socks5 server running", "on", serverAddr)
 
 		if err := socks5Server.ListenAndServe("tcp", serverAddr); err != nil {
-			logger.Error("Failed to start socks5 server", "err", err)
-			os.Exit(1)
+			log.Fatalln("failed to start socks5 server", "err", err)
 		}
 
-		logger.Info("socks5 server stopped")
+		logger.Info("Socks5 server stopped")
 	}()
 
 	<-done
@@ -82,9 +83,9 @@ func setupLogger(env string) *slog.Logger {
 	opts := &slog.HandlerOptions{}
 
 	switch env {
-	case config.Dev:
+	case config.EnvDev:
 		opts.Level = slog.LevelDebug
-	case config.Prod:
+	case config.EnvProd:
 		opts.Level = slog.LevelInfo
 	}
 

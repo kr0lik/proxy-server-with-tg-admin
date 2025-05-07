@@ -7,19 +7,20 @@ import (
 	"time"
 )
 
-type CreateUser struct {
+type createUser struct {
 	storage StorageInterface
 }
 
-func (c *CreateUser) Id() string {
+func (c *createUser) Id() string {
 	return "create"
 }
 
-func (c *CreateUser) Arguments() []string {
+func (c *createUser) Arguments() []string {
 	return []string{usernameArg, "[password]", "[ttl]"}
 }
 
-func (c *CreateUser) Run(args ...string) (string, error) {
+func (c *createUser) Run(args ...string) (string, error) {
+	const op = "commands.createUser.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -50,15 +51,15 @@ func (c *CreateUser) Run(args ...string) (string, error) {
 
 	_, err := c.storage.CreateUser(username, password)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := c.storage.ActivateUser(username); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := c.storage.UpdateTtl(username, ttl); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return fmt.Sprintf("Created user with credentials \"%s:%s\" and ttl to %s", username, password, helper.TtlToString(ttl)), nil

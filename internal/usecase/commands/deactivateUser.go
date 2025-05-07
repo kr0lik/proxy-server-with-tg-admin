@@ -4,19 +4,20 @@ import (
 	"fmt"
 )
 
-type StopUser struct {
+type deactivateUser struct {
 	storage StorageInterface
 }
 
-func (c *StopUser) Id() string {
+func (c *deactivateUser) Id() string {
 	return "deactivate"
 }
 
-func (c *StopUser) Arguments() []string {
+func (c *deactivateUser) Arguments() []string {
 	return []string{usernameArg}
 }
 
-func (c *StopUser) Run(args ...string) (string, error) {
+func (c *deactivateUser) Run(args ...string) (string, error) {
+	const op = "commands.deactivateUser.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -26,7 +27,7 @@ func (c *StopUser) Run(args ...string) (string, error) {
 	}
 
 	if err := c.storage.DeactivateUser(username); err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return fmt.Sprintf("User %s deactivated", username), nil

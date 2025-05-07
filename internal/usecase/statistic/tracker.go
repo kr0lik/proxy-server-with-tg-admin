@@ -1,6 +1,7 @@
 package statistic
 
 import (
+	"github.com/kagadar/go-syncmap"
 	"log/slog"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ type incomeStat struct {
 }
 
 type Tracker struct {
-	stats           sync.Map // map[uint32]*statistic
+	stats           syncmap.Map[uint32, *statistic]
 	consumeIncomeCh chan incomeStat
 	consumeStopCh   chan struct{}
 	syncStopCh      chan struct{}
@@ -41,6 +42,13 @@ func New(storage StorageInterface, logger *slog.Logger) *Tracker {
 
 func (t *Tracker) Start() {
 	t.wg.Add(1)
+
+	go func() {
+		defer t.wg.Done()
+
+		t.sync()
+	}()
+
 	go func() {
 		defer t.wg.Done()
 
@@ -48,11 +56,6 @@ func (t *Tracker) Start() {
 	}()
 
 	t.wg.Add(1)
-	go func() {
-		defer t.wg.Done()
-
-		t.sync()
-	}()
 }
 
 func (t *Tracker) Stop() {
@@ -61,8 +64,6 @@ func (t *Tracker) Stop() {
 	close(t.consumeStopCh)
 
 	t.wg.Wait()
-
-	t.commit()
 
 	t.logger.Debug("Statistic tracker stopped")
 }
@@ -120,6 +121,7 @@ func (t *Tracker) sync() {
 		case <-ticker.C:
 			t.commit()
 		case <-t.syncStopCh:
+			t.commit()
 			t.logger.Warn("Statistic tracker sync stopped")
 
 			return
@@ -128,8 +130,7 @@ func (t *Tracker) sync() {
 }
 
 func (t *Tracker) cache(userId uint32, in, out uint64) {
-	val, _ := t.stats.LoadOrStore(userId, &statistic{})
-	st, ok := val.(*statistic)
+	st, ok := t.stats.LoadOrStore(userId, &statistic{})
 	if !ok {
 		t.logger.Error("Statistic tracker: invalid statistic type in stat map")
 
@@ -140,22 +141,7 @@ func (t *Tracker) cache(userId uint32, in, out uint64) {
 }
 
 func (t *Tracker) commit() {
-	t.stats.Range(func(key, value any) bool {
-		userId, ok := key.(uint32)
-		if !ok {
-			t.logger.Error("Statistic tracker: invalid userId type in stat map")
-
-			return true
-		}
-
-		st, ok := value.(*statistic)
-
-		if !ok {
-			t.logger.Error("Statistic tracker: invalid statistic type in stat map")
-
-			return true
-		}
-
+	t.stats.Range(func(userId uint32, st *statistic) bool {
 		in, out := st.GetAndClean()
 
 		if in == 0 && out == 0 {
@@ -164,10 +150,10 @@ func (t *Tracker) commit() {
 			return true
 		}
 
-		t.logger.Debug("Statistic tracker dumping", "user", userId, "in", in, "out", out)
+		t.logger.Debug("Statistic tracker commit", "user", userId, "in", in, "out", out)
 
 		if err := t.storage.AddStat(userId, in, out); err != nil {
-			t.logger.Debug("Statistic tracker dump", "err", err)
+			t.logger.Debug("Statistic tracker commit", "err", err)
 			st.Increment(in, out)
 		}
 

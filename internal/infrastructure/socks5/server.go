@@ -1,54 +1,96 @@
 package socks5
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"github.com/things-go/go-socks5"
 	"log/slog"
 	"net"
 	"proxy-server-with-tg-admin/internal/usecase/auth"
 	"proxy-server-with-tg-admin/internal/usecase/statistic"
+	"sync"
 )
 
-type CustomLogger struct {
+type Server struct {
+	*socks5.Server
+	wg     sync.WaitGroup
+	stopCh chan struct{}
 	logger *slog.Logger
 }
 
-func (cl CustomLogger) Errorf(format string, v ...interface{}) {
-	cl.logger.Error("socks5.server", "internal", fmt.Sprintf(format, v...))
+func New(statisticTracker *statistic.Tracker, authenticator *auth.Authenticator, logger *slog.Logger) *Server {
+	srv := socks5.NewServer(
+		socks5.WithAuthMethods([]socks5.Authenticator{&UserPassAuthenticator{credentials: &CredentialStore{authenticator: authenticator, logger: logger}}}),
+		socks5.WithLogger(&Logger{logger: logger}),
+		socks5.WithDialAndRequest(dialAndRequest(statisticTracker, logger)),
+		socks5.WithDial(dial(logger)),
+	)
+
+	return &Server{
+		Server: srv,
+		stopCh: make(chan struct{}),
+		logger: logger,
+	}
 }
 
-// TODO
-func GetServer(statisticTracker *statistic.Tracker, authenticator *auth.Authenticator, logger *slog.Logger) *socks5.Server {
-	return socks5.NewServer(
-		socks5.WithCredential(&CredentialStore{authenticator: authenticator, logger: logger}),
-		socks5.WithLogger(&CustomLogger{logger: logger}),
-		socks5.WithDialAndRequest(func(ctx context.Context, network, addr string, request *socks5.Request) (net.Conn, error) {
-			var d net.Dialer
+func (s *Server) ListenAndServe(network, addr string) error {
+	l, err := net.Listen(network, addr)
+	if err != nil {
+		return fmt.Errorf("socks5.ListenAndServe: %w", err)
+	}
 
-			conn, err := d.DialContext(ctx, network, addr)
+	return s.Serve(l)
+}
+
+func (s *Server) Serve(l net.Listener) error {
+	defer l.Close()
+
+	for {
+		select {
+		case <-s.stopCh:
+			return nil
+		default:
+			conn, err := l.Accept()
 			if err != nil {
-				return nil, err
+				return fmt.Errorf("socks5.Serve: failed to accept connection: %w", err)
 			}
 
-			var userId uint32
+			errCh := make(chan error)
 
-			// TODO
-			username, ok := request.AuthContext.Payload["username"]
-			if ok {
-				password, ok := request.AuthContext.Payload["password"]
-				if ok {
-					userId, err = authenticator.GetUserId(username, password)
-					if err != nil {
-						return nil, err
+			go func() {
+				errCh <- s.ServeConn(conn)
+			}()
+
+			s.wg.Add(1)
+			go func() {
+				defer s.wg.Done()
+
+				select {
+				case <-s.stopCh:
+					s.logger.Debug("Socks5 server stopping serve connection")
+
+					if err := conn.Close(); err != nil {
+						s.logger.Warn("Socks5 server stopping serve connection", "conn.Close", err)
 					}
-
-					return &connection{Conn: conn, UserId: userId, statisticTracker: statisticTracker, logger: logger}, nil
+				case err = <-errCh:
+					if err != nil {
+						s.logger.Error("Socks5.server", "serve connection", err)
+					}
 				}
-			}
+			}()
+		}
+	}
+}
 
-			return nil, errors.New("bad credentials")
-		}),
-	)
+func (s *Server) Shutdown() {
+	s.logger.Debug("Socks5 server shutting down")
+	close(s.stopCh)
+
+	waitConnectionsCh := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(waitConnectionsCh)
+	}()
+
+	<-waitConnectionsCh
+	s.logger.Debug("Socks5 server all connections closed")
 }

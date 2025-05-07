@@ -16,11 +16,10 @@ type state struct {
 	ttl          time.Time
 }
 
-// TODO
 type cache struct {
 	data    map[string]*state
 	mu      sync.RWMutex
-	storage UserStorageInterface
+	storage StorageInterface
 	logger  *slog.Logger
 }
 
@@ -49,12 +48,12 @@ func (c *cache) get(username string) (state, bool) {
 		return state{}, false
 	}
 
-	c.extendTTLIfNeeded(item)
+	c.extendTtlIfNeeded(item)
 
 	return *item, true
 }
 
-func (c *cache) extendTTLIfNeeded(state *state) {
+func (c *cache) extendTtlIfNeeded(state *state) {
 	if state.ttl.Add(time.Minute).Before(time.Now()) {
 		return
 	}
