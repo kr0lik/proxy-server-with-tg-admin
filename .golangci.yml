@@ -38,6 +38,10 @@ linters:
         text: "StringToUint32: invalid digit %q in string"
         linters:
           - err113
+      - path: internal/infrastructure/socks5/authenticator.go
+        text: "invalid username or password"
+        linters:
+          - err113
       - path: internal/infrastructure/sqlite/
         text: "stmt.Close"
         linters:
@@ -53,5 +57,9 @@ linters:
           - ireturn
       - path: internal/usecase/commands/createUser.go
         text: "Magic number: 2"
+        linters:
+          - mnd
+      - path: internal/usecase/commands/top.go
+        text: "Magic number: 1024"
         linters:
           - mnd

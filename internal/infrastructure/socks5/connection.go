@@ -2,17 +2,17 @@ package socks5
 
 import (
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"proxy-server-with-tg-admin/internal/usecase/statistic"
+	"sync/atomic"
 )
 
 type connection struct {
 	net.Conn
-	BytesRead        uint64
-	BytesWritten     uint64
-	UserId           uint32
+	bytesRead        uint64
+	bytesWritten     uint64
+	userId           uint32
 	statisticTracker *statistic.Tracker
 	logger           *slog.Logger
 }
@@ -20,11 +20,13 @@ type connection struct {
 func (c *connection) Close() error {
 	const op = "socks5.connection.Close"
 
-	if c.BytesRead > 0 || c.BytesWritten > 0 {
-		c.logger.Debug("Socks5 dial connection closing", "user", c.UserId, "in", c.BytesRead, "out", c.BytesWritten)
+	bytesRead := atomic.SwapUint64(&c.bytesRead, 0)
+	bytesWritten := atomic.SwapUint64(&c.bytesWritten, 0)
 
-		c.statisticTracker.Track(c.UserId, c.BytesRead, c.BytesWritten)
-		c.BytesRead, c.BytesWritten = 0, 0
+	if bytesRead > 0 || bytesWritten > 0 {
+		c.logger.Debug("Socks5 dial connection closing", "user", c.userId, "in", c.bytesRead, "out", c.bytesWritten)
+
+		c.statisticTracker.Track(c.userId, c.bytesRead, c.bytesWritten)
 	}
 
 	if err := c.Conn.Close(); err != nil {
@@ -39,10 +41,6 @@ func (c *connection) Read(b []byte) (int, error) {
 
 	n, err := c.Conn.Read(b)
 	if err != nil {
-		if err.Error() == io.EOF.Error() {
-			return n, nil
-		}
-
 		return n, fmt.Errorf("%s: %w (%db)", op, err, n)
 	}
 
@@ -51,7 +49,7 @@ func (c *connection) Read(b []byte) (int, error) {
 	}
 
 	if n > 0 {
-		c.BytesRead += uint64(n)
+		atomic.AddUint64(&c.bytesRead, uint64(n))
 	}
 
 	return n, nil
@@ -70,7 +68,7 @@ func (c *connection) Write(b []byte) (int, error) {
 	}
 
 	if n > 0 {
-		c.BytesWritten += uint64(n)
+		atomic.AddUint64(&c.bytesWritten, uint64(n))
 	}
 
 	return n, nil

@@ -36,6 +36,7 @@ type List struct {
 func New(storage StorageInterface) *List {
 	return &List{
 		list: []Cmd{
+			&top{},
 			&createUser{storage: storage},
 			&activateUser{storage: storage},
 			&deactivateUser{storage: storage},

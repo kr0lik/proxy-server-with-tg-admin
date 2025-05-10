@@ -40,10 +40,10 @@ func (c *getStatistic) Run(args ...string) (string, error) {
 
 	return fmt.Sprintf("Last activity %s.\nin: %s\nout: %s\nActive dyes: %d\n\nTotal in: %s\nTotal out: %s",
 		updated,
-		helper.FromBytesFormat(userStat.TrafficInDay),
-		helper.FromBytesFormat(userStat.TrafficOutDay),
+		helper.BytesFormat(userStat.TrafficInDay),
+		helper.BytesFormat(userStat.TrafficOutDay),
 		userStat.DaysActive,
-		helper.FromBytesFormat(userStat.TrafficInTotal),
-		helper.FromBytesFormat(userStat.TrafficOutTotal),
+		helper.BytesFormat(userStat.TrafficInTotal),
+		helper.BytesFormat(userStat.TrafficOutTotal),
 	), nil
 }

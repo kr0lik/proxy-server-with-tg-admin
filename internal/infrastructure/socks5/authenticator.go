@@ -27,15 +27,18 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	username := string(nup.User)
+	password := string(nup.Pass)
+
 	// Verify the password
-	userId := a.credentials.GetUserId(string(nup.User), string(nup.Pass), userAddr)
+	userId := a.credentials.GetUserId(username, password, userAddr)
 
 	if userId == 0 {
 		if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthFailure}); err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 
-		return nil, statute.ErrUserAuthFailed
+		return nil, fmt.Errorf("%s: invalid username or password (%s:%s %s)", op, username, username, userAddr)
 	}
 
 	if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthSuccess}); err != nil {
@@ -46,7 +49,9 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 	return &socks5.AuthContext{
 		Method: statute.MethodUserPassAuth,
 		Payload: map[string]string{
-			"userId": helper.Uint32ToString(userId),
+			"userId":   helper.Uint32ToString(userId),
+			"username": username,
+			"password": password,
 		},
 	}, nil
 }

@@ -34,7 +34,7 @@ func dialAndRequest(statisticTracker *statistic.Tracker, logger *slog.Logger) fu
 			return nil, fmt.Errorf("dial: %w", err)
 		}
 
-		return &connection{Conn: conn, UserId: userId, statisticTracker: statisticTracker, logger: logger}, nil
+		return &connection{Conn: conn, userId: userId, statisticTracker: statisticTracker, logger: logger}, nil
 	}
 }
 

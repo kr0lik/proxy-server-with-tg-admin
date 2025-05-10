@@ -8,7 +8,7 @@ const (
 	gb = 1 << 30 // 1024 * 1024 * 1024
 )
 
-func FromBytesFormat(bytes uint64) string {
+func BytesFormat(bytes uint64) string {
 	switch {
 	case bytes >= gb:
 		return fmt.Sprintf("%.2f GB", float64(bytes)/gb)
