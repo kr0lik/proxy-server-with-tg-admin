@@ -49,13 +49,13 @@ func (t *Tracker) Start() {
 		t.sync()
 	}()
 
+	t.wg.Add(1)
+
 	go func() {
 		defer t.wg.Done()
 
 		t.consume()
 	}()
-
-	t.wg.Add(1)
 }
 
 func (t *Tracker) Stop() {
@@ -130,13 +130,7 @@ func (t *Tracker) sync() {
 }
 
 func (t *Tracker) cache(userId uint32, in, out uint64) {
-	st, ok := t.stats.LoadOrStore(userId, &statistic{})
-	if !ok {
-		t.logger.Error("Statistic tracker: invalid statistic type in stat map")
-
-		return
-	}
-
+	st, _ := t.stats.LoadOrStore(userId, &statistic{})
 	st.Increment(in, out)
 }
 

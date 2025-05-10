@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -68,7 +67,10 @@ func main() {
 		logger.Info("Socks5 server running", "on", serverAddr)
 
 		if err := socks5Server.ListenAndServe("tcp", serverAddr); err != nil {
-			log.Fatalln("failed to start socks5 server", "err", err)
+			logger.Error("Socks5 server", "ListenAndServe", err)
+			done <- os.Interrupt
+
+			return
 		}
 
 		logger.Info("Socks5 server stopped")
