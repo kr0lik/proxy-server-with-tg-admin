@@ -17,8 +17,8 @@ func dialAndRequest(statisticTracker *statistic.Tracker, logger *slog.Logger) fu
 	return func(ctx context.Context, network, addr string, request *socks5.Request) (net.Conn, error) {
 		var d net.Dialer
 
-		userIdStr, ok := request.AuthContext.Payload["userId"]
-		if !ok {
+		userIdStr, exist := request.AuthContext.Payload["userId"]
+		if !exist {
 			return nil, ErrNoUserId
 		}
 

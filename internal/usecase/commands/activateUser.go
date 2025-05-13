@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"proxy-server-with-tg-admin/internal/entity"
 	"proxy-server-with-tg-admin/internal/helper"
+	"proxy-server-with-tg-admin/internal/usecase/auth"
 	"time"
 )
 
 type activateUser struct {
-	storage StorageInterface
+	storage       StorageInterface
+	authenticator *auth.Authenticator
 }
 
 func (c *activateUser) Id() string {
@@ -47,6 +49,8 @@ func (c *activateUser) Run(args ...string) (string, error) {
 	if err := c.storage.UpdateTtl(username, ttl); err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
+
+	c.authenticator.UpdateUserTtl(username, ttl)
 
 	return fmt.Sprintf("User %s activated with ttl to %s", username, helper.TtlToString(ttl)), nil
 }

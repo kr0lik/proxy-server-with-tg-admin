@@ -12,7 +12,6 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 var ErrUserExists = errors.New("user already exists")
-var ErrCantReturnId = errors.New("cant return id")
 
 type scanRow interface {
 	Scan(dest ...any) error
@@ -113,6 +112,8 @@ func (s *Storage) ListUsers() ([]*entity.User, error) {
 		user, err := s.getEntity(rows)
 		if err == nil {
 			list = append(list, user)
+		} else {
+			return list, fmt.Errorf("%s: %w", op, err)
 		}
 	}
 
@@ -221,11 +222,7 @@ func (s *Storage) getEntity(row scanRow) (*entity.User, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	const possibleZeroTime = 86400
-
-	if time.Unix(ttl, 0).Unix() > possibleZeroTime {
-		user.Ttl = time.Unix(ttl, 0)
-	}
+	user.Ttl = toTime(ttl)
 
 	return user, nil
 }

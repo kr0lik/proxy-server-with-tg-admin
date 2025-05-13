@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	_ "modernc.org/sqlite"
 	"os"
+	"time"
 )
 
 type Storage struct {
@@ -41,4 +42,14 @@ func (s *Storage) Close() {
 	}
 
 	s.logger.Debug("Sqlite db closed")
+}
+
+func toTime(t int64) time.Time {
+	const possibleZeroTime = 86400
+
+	if time.Unix(t, 0).Unix() > possibleZeroTime {
+		return time.Unix(t, 0)
+	}
+
+	return time.Time{}
 }

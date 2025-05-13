@@ -36,11 +36,19 @@ func registerCommands(bot *tele.Bot, commands *commands.List) {
 			args := strings.Fields(payload)
 
 			res, err := cmd.Run(args...)
-			if err != nil {
-				res = err.Error()
+			if res != "" {
+				if err := c.Reply(res); err != nil {
+					return c.Reply(err.Error())
+				}
 			}
 
-			return c.Reply(res)
+			if err != nil {
+				if err := c.Reply(err.Error()); err != nil {
+					return c.Reply(err.Error())
+				}
+			}
+
+			return nil
 		})
 	}
 }

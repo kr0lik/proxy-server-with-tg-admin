@@ -3,10 +3,12 @@ package commands
 import (
 	"fmt"
 	"proxy-server-with-tg-admin/internal/helper"
+	"proxy-server-with-tg-admin/internal/usecase/auth"
 )
 
 type updatePassword struct {
-	storage StorageInterface
+	storage       StorageInterface
+	authenticator *auth.Authenticator
 }
 
 func (c *updatePassword) Id() string {
@@ -36,6 +38,8 @@ func (c *updatePassword) Run(args ...string) (string, error) {
 	if err := c.storage.UpdatePassword(username, password); err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
+
+	c.authenticator.Forget(username)
 
 	return fmt.Sprintf("New credentials: \"%s:%s\"", username, password), nil
 }

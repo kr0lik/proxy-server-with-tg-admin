@@ -19,9 +19,9 @@ func (s *statistic) Increment(in, out uint64) {
 	}
 }
 
-func (s *statistic) GetAndClean() (uint64, uint64) {
-	oldIn := atomic.SwapUint64(&s.in, 0)
-	oldOut := atomic.SwapUint64(&s.out, 0)
+func (s *statistic) GetAndClean() (in, out uint64) {
+	in = atomic.LoadUint64(&s.in)
+	out = atomic.LoadUint64(&s.out)
 
-	return oldIn, oldOut
+	return
 }

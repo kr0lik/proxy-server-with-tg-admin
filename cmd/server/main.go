@@ -17,8 +17,8 @@ import (
 
 func main() {
 	cfg := config.MustLoad()
-	logger := setupLogger(cfg.Env())
 
+	logger := setupLogger(cfg.Env())
 	logger.Debug("starting", "env", cfg.Env(), "port", cfg.PortSocks5(), "db path", cfg.SqlitePath())
 
 	logger.Info("Storage starting")
@@ -31,9 +31,22 @@ func main() {
 	}
 	defer storage.Close()
 
+	logger.Info("Use cases starting")
+
+	authenticator := auth.New(storage, logger)
+	cmdList := commands.New(storage, authenticator)
+
+	statisticTracker := statistic.New(storage, logger)
+	logger.Info("Statistic tracker running")
+	statisticTracker.Start()
+	defer statisticTracker.Stop()
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	logger.Info("Telegram bot starting")
 
-	tgBot, err := telegram.MakeBot(cfg.TelegramToken(), cfg.TelegramAdminId(), commands.New(storage))
+	tgBot, err := telegram.MakeBot(cfg.TelegramToken(), cfg.TelegramAdminId(), cmdList)
 	if err != nil {
 		logger.Error("Failed to start telegram bot", "err", err)
 
@@ -47,19 +60,9 @@ func main() {
 		logger.Info("Telegram bot stopped")
 	}()
 
-	logger.Info("Statistic tracker starting")
-
-	statisticTracker := statistic.New(storage, logger)
-	logger.Info("Statistic tracker running")
-	statisticTracker.Start()
-	defer statisticTracker.Stop()
-
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
 	logger.Info("Socks5 server starting")
 
-	socks5Server := socks5.New(statisticTracker, auth.New(storage, logger), logger)
+	socks5Server := socks5.New(statisticTracker, authenticator, logger)
 	defer socks5Server.Shutdown()
 
 	go func() {

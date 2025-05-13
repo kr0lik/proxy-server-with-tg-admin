@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-const ttl = time.Second * 60 * 5
-const clearPeriod = time.Second * 60
+const ttl = time.Minute * 5
+const clearPeriod = time.Minute * 2
 
 type state struct {
 	userId       uint32
@@ -17,18 +17,17 @@ type state struct {
 }
 
 type cache struct {
-	data    map[string]*state
-	mu      sync.RWMutex
-	storage StorageInterface
-	logger  *slog.Logger
+	data   map[string]*state
+	mu     sync.RWMutex
+	logger *slog.Logger
 }
 
 func (c *cache) update(username, password string, userId uint32, userTtl time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	st, ok := c.data[username]
-	if !ok {
+	st, exist := c.data[username]
+	if !exist {
 		st = &state{}
 		c.data[username] = st
 	}
@@ -43,24 +42,24 @@ func (c *cache) get(username string) (state, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	item, exists := c.data[username]
+	st, exists := c.data[username]
 	if !exists {
 		return state{}, false
 	}
 
-	c.extendTtlIfNeeded(item)
+	if st.ttl.Add(clearPeriod).After(time.Now()) {
+		go func() {
+			c.mu.Lock()
+			defer c.mu.Unlock()
 
-	return *item, true
-}
-
-func (c *cache) extendTtlIfNeeded(state *state) {
-	if state.ttl.Add(time.Minute).Before(time.Now()) {
-		return
+			st, exists := c.data[username]
+			if exists {
+				st.ttl = time.Now().Add(ttl)
+			}
+		}()
 	}
 
-	if state.userTtl.IsZero() || state.userTtl.After(time.Now()) {
-		state.ttl = time.Now().Add(ttl)
-	}
+	return *st, true
 }
 
 func (c *cache) checkup() {
@@ -81,11 +80,14 @@ func (c *cache) checkup() {
 		c.mu.RUnlock()
 
 		if len(toForget) > 0 {
-			c.mu.Lock()
 			for _, username := range toForget {
-				delete(c.data, username)
+				c.mu.Lock()
+				st, exist := c.data[username]
+				if exist && c.isNeedForget(username, st) {
+					delete(c.data, username)
+				}
+				c.mu.Unlock()
 			}
-			c.mu.Unlock()
 		}
 	}
 }
@@ -105,14 +107,21 @@ func (c *cache) isNeedForget(username string, state *state) bool {
 		return true
 	}
 
-	user, err := c.storage.GetUser(username)
-	if err == nil {
-		if !user.Active || user.Password != state.userPassword || user.Ttl != state.userTtl {
-			c.logger.Debug("Auth state checkup", "user changed", username)
-
-			return true
-		}
-	}
-
 	return false
+}
+
+func (c *cache) forget(username string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.data, username)
+}
+
+func (c *cache) updateUserTtl(username string, ttl time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	item, exists := c.data[username]
+	if exists {
+		item.userTtl = ttl
+	}
 }

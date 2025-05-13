@@ -18,9 +18,8 @@ type Authenticator struct {
 
 func New(storage StorageInterface, logger *slog.Logger) *Authenticator {
 	cache := &cache{
-		data:    make(map[string]*state),
-		storage: storage,
-		logger:  logger,
+		data:   make(map[string]*state),
+		logger: logger,
 	}
 
 	go cache.checkup()
@@ -29,9 +28,9 @@ func New(storage StorageInterface, logger *slog.Logger) *Authenticator {
 }
 
 func (a *Authenticator) Authenticate(username, password string) uint32 {
-	st, ok := a.cache.get(username)
+	st, exist := a.cache.get(username)
 
-	if ok && st.userPassword == password {
+	if exist && st.userPassword == password {
 		return st.userId
 	}
 
@@ -71,4 +70,12 @@ func (a *Authenticator) validate(user *entity.User) bool {
 	}
 
 	return true
+}
+
+func (a *Authenticator) Forget(username string) {
+	a.cache.forget(username)
+}
+
+func (a *Authenticator) UpdateUserTtl(username string, ttl time.Time) {
+	a.cache.updateUserTtl(username, ttl)
 }

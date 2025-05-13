@@ -47,6 +47,11 @@ linters:
         linters:
           - errcheck
           - staticcheck
+      - path: internal/infrastructure/sqlite/
+        text: "rows.Close"
+        linters:
+          - errcheck
+          - staticcheck
       - path: internal/infrastructure/socks5/server.go
         text: "Error return value of `l.Close` is not checked"
         linters:
@@ -60,6 +65,9 @@ linters:
         linters:
           - mnd
       - path: internal/usecase/commands/top.go
-        text: "Magic number: 1024"
+        text: "Magic number: 100"
         linters:
           - mnd
+      - path: internal/usecase/statistic/statistic.go
+        linters:
+          - nonamedreturns

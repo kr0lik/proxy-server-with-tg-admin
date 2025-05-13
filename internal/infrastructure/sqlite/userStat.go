@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"proxy-server-with-tg-admin/internal/entity"
+	"proxy-server-with-tg-admin/internal/usecase/commands"
 	"time"
 )
 
@@ -96,4 +97,40 @@ func (s *Storage) DeleteUserStat(username string) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) ListUsersWithStat() ([]*commands.UsersWithStatDto, error) {
+	const op = "storage.sqlite.ListUsersWithStat"
+
+	userCount, _ := s.countUsers()
+
+	list := make([]*commands.UsersWithStatDto, 0, userCount)
+
+	rows, err := s.db.Query("SELECT u.username, u.active, u.ttl, COALESCE(us.traffic_in_total, 0), COALESCE(us.traffic_out_total, 0), COALESCE(us.days_active, 0), COALESCE(strftime('%s', us.updated), 0) FROM user u LEFT JOIN user_stat us ON u.id = us.user_id")
+	defer rows.Close()
+
+	if err != nil {
+		return list, fmt.Errorf("%s: %w", op, err)
+	}
+
+	if rows.Err() != nil {
+		return list, fmt.Errorf("%s: %w", op, rows.Err())
+	}
+
+	for rows.Next() {
+		var ttl, updated int64
+		dto := &commands.UsersWithStatDto{}
+
+		err := rows.Scan(&dto.Username, &dto.Active, &ttl, &dto.TotalIn, &dto.TotalOut, &dto.DyesActive, &updated)
+		if err == nil {
+			dto.Ttl = toTime(ttl)
+			dto.LastActive = toTime(updated)
+
+			list = append(list, dto)
+		} else {
+			return list, fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return list, nil
 }

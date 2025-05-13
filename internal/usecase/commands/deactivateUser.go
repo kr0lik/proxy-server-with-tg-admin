@@ -2,10 +2,12 @@ package commands
 
 import (
 	"fmt"
+	"proxy-server-with-tg-admin/internal/usecase/auth"
 )
 
 type deactivateUser struct {
-	storage StorageInterface
+	storage       StorageInterface
+	authenticator *auth.Authenticator
 }
 
 func (c *deactivateUser) Id() string {
@@ -29,6 +31,8 @@ func (c *deactivateUser) Run(args ...string) (string, error) {
 	if err := c.storage.DeactivateUser(username); err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
+
+	c.authenticator.Forget(username)
 
 	return fmt.Sprintf("User %s deactivated", username), nil
 }

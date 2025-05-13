@@ -24,9 +24,9 @@ func (c *connection) Close() error {
 	bytesWritten := atomic.SwapUint64(&c.bytesWritten, 0)
 
 	if bytesRead > 0 || bytesWritten > 0 {
-		c.logger.Debug("Socks5 dial connection closing", "user", c.userId, "in", c.bytesRead, "out", c.bytesWritten)
+		c.logger.Debug("Socks5 dial connection closing", "user", c.userId, "in", bytesRead, "out", bytesWritten)
 
-		c.statisticTracker.Track(c.userId, c.bytesRead, c.bytesWritten)
+		c.statisticTracker.Track(c.userId, bytesRead, bytesWritten)
 	}
 
 	if err := c.Conn.Close(); err != nil {

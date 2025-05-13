@@ -20,25 +20,27 @@ func (c *listUsers) Arguments() []string {
 func (c *listUsers) Run(args ...string) (string, error) {
 	const op = "commands.listUsers.Run"
 
-	list, err := c.storage.ListUsers()
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
-	}
+	list, err := c.storage.ListUsersWithStat()
 
 	res := ""
 
-	for _, user := range list {
+	for _, dto := range list {
 		active := "✅"
 
-		if !user.Active {
+		if !dto.Active {
 			active = "⚫"
 		}
 
-		res += fmt.Sprintf("%s %s with ttl to %s\n", active, user.Username, helper.TtlToString(user.Ttl))
+		res += fmt.Sprintf("%s %s with ttl to %s\n", active, dto.Username, helper.TtlToString(dto.Ttl))
+		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last on %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, helper.TtlToString(dto.LastActive))
 	}
 
 	if res == "" {
 		res = "Empty"
+	}
+
+	if err != nil {
+		return res, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return res, nil

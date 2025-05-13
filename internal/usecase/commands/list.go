@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"proxy-server-with-tg-admin/internal/entity"
+	"proxy-server-with-tg-admin/internal/usecase/auth"
 	"time"
 )
 
@@ -18,9 +19,19 @@ type StorageInterface interface {
 	UpdatePassword(username, password string) error
 	UpdateTtl(username string, ttl time.Time) error
 	GetStatistic(username string) (*entity.UserStat, error)
-	ListUsers() ([]*entity.User, error)
+	ListUsersWithStat() ([]*UsersWithStatDto, error)
 	DeleteUser(username string) error
 	DeleteUserStat(username string) error
+}
+
+type UsersWithStatDto struct {
+	Username   string
+	Active     bool
+	Ttl        time.Time
+	TotalIn    uint64
+	TotalOut   uint64
+	DyesActive uint
+	LastActive time.Time
 }
 
 type Cmd interface {
@@ -33,18 +44,18 @@ type List struct {
 	list []Cmd
 }
 
-func New(storage StorageInterface) *List {
+func New(storage StorageInterface, authenticator *auth.Authenticator) *List {
 	return &List{
 		list: []Cmd{
 			&top{},
 			&createUser{storage: storage},
-			&activateUser{storage: storage},
-			&deactivateUser{storage: storage},
-			&updatePassword{storage: storage},
-			&updateTtl{storage: storage},
+			&activateUser{storage: storage, authenticator: authenticator},
+			&deactivateUser{storage: storage, authenticator: authenticator},
+			&updatePassword{storage: storage, authenticator: authenticator},
+			&updateTtl{storage: storage, authenticator: authenticator},
 			&listUsers{storage: storage},
 			&getStatistic{storage: storage},
-			&deleteUser{storage: storage},
+			&deleteUser{storage: storage, authenticator: authenticator},
 		},
 	}
 }
