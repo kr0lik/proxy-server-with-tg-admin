@@ -26,6 +26,8 @@ func (c *connection) Close() error {
 	if bytesRead > 0 || bytesWritten > 0 {
 		c.logger.Debug("Socks5 dial connection closing", "user", c.userId, "in", bytesRead, "out", bytesWritten)
 
+		// in: bytesRead - from target to user
+		// out: bytesWritten - from user to target
 		c.statisticTracker.Track(c.userId, bytesRead, bytesWritten)
 	}
 
