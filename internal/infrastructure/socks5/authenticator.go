@@ -1,11 +1,13 @@
 package socks5
 
 import (
+	"errors"
 	"fmt"
 	"github.com/things-go/go-socks5"
 	"github.com/things-go/go-socks5/statute"
 	"io"
 	"proxy-server-with-tg-admin/internal/helper"
+	"proxy-server-with-tg-admin/internal/usecase/auth"
 )
 
 type UserPassAuthenticator struct {
@@ -30,15 +32,26 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 	username := string(nup.User)
 	password := string(nup.Pass)
 
-	// Verify the password
-	userId := a.credentials.GetUserId(username, password, userAddr)
+	// Verify
+	userId, err := a.credentials.GetUserId(username, password, userAddr)
+	if err != nil {
+		if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthFailure}); err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+
+		if errors.Is(err, auth.ErrUserPassword) {
+			return nil, fmt.Errorf("%s: %w (%s:%s %s)", op, err, username, password, userAddr)
+		}
+
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
 
 	if userId == 0 {
 		if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthFailure}); err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 
-		return nil, fmt.Errorf("%s: invalid username or password (%s:%s %s)", op, username, username, userAddr)
+		return nil, fmt.Errorf("%s: zero user id returned", op)
 	}
 
 	if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthSuccess}); err != nil {

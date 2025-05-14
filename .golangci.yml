@@ -26,20 +26,20 @@ linters:
         text: "negative byte count"
         linters:
           - err113
+      - path: internal/infrastructure/socks5/authenticator.go
+        text: "zero user id returned"
+        linters:
+          - err113
+      - path: internal/usecase/auth/authenticator.go
+        text: "userId is not uint32"
+        linters:
+          - err113
       - path: internal/helper/ttl.go
         text: "empty input"
         linters:
           - err113
-      - path: internal/usecase/auth/authenticator.go
-        text: "invalid password"
-        linters:
-          - err113
       - path: internal/helper/uint32.go
         text: "StringToUint32: invalid digit %q in string"
-        linters:
-          - err113
-      - path: internal/infrastructure/socks5/authenticator.go
-        text: "invalid username or password"
         linters:
           - err113
       - path: internal/infrastructure/sqlite/
