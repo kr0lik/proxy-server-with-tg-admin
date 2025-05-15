@@ -38,12 +38,12 @@ func (c *getStatistic) Run(args ...string) (string, error) {
 		updated = userStat.Updated.Format(time.DateOnly)
 	}
 
-	return fmt.Sprintf("Last activity %s.\nin: %s\nout: %s\nActive dyes: %d\n\nTotal in: %s\nTotal out: %s",
-		updated,
-		helper.BytesFormat(userStat.TrafficInDay),
-		helper.BytesFormat(userStat.TrafficOutDay),
-		userStat.DaysActive,
-		helper.BytesFormat(userStat.TrafficInTotal),
-		helper.BytesFormat(userStat.TrafficOutTotal),
-	), nil
+	res := fmt.Sprintf("Last activity *%s* %s.\n", username, updated) +
+		fmt.Sprintf("in: %s\n", helper.BytesFormat(userStat.TrafficInDay)) +
+		fmt.Sprintf("out: %s\n", helper.BytesFormat(userStat.TrafficOutDay)) +
+		fmt.Sprintf("Active dyes: %d\n\n", userStat.DaysActive) +
+		fmt.Sprintf("Total in: %s\n", helper.BytesFormat(userStat.TrafficInTotal)) +
+		fmt.Sprintf("Total out: %s\n", helper.BytesFormat(userStat.TrafficOutTotal))
+
+	return res, nil
 }

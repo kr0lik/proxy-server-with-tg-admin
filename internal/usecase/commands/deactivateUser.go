@@ -34,5 +34,5 @@ func (c *deactivateUser) Run(args ...string) (string, error) {
 
 	c.authenticator.Forget(username)
 
-	return fmt.Sprintf("User %s deactivated", username), nil
+	return fmt.Sprintf("User *%s* deactivated", username), nil
 }

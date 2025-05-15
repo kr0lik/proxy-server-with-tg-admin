@@ -37,7 +37,7 @@ func registerCommands(bot *tele.Bot, commands *commands.List) {
 
 			res, err := cmd.Run(args...)
 			if res != "" {
-				if err := c.Reply(res); err != nil {
+				if err := c.Reply(res, tele.ModeMarkdown); err != nil {
 					return c.Reply(err.Error())
 				}
 			}

@@ -26,7 +26,7 @@ func StringToTtl(input string) (time.Time, error) {
 
 func TtlToString(input time.Time) string {
 	if input.IsZero() {
-		return " - "
+		return "-"
 	}
 
 	return input.Format(time.DateTime)

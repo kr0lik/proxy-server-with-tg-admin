@@ -31,8 +31,8 @@ func (c *listUsers) Run(args ...string) (string, error) {
 			active = "⚫"
 		}
 
-		res += fmt.Sprintf("%s %s with ttl to %s\n", active, dto.Username, helper.TtlToString(dto.Ttl))
-		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last on %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, helper.TtlToString(dto.LastActive))
+		res += fmt.Sprintf("%s *%s* with ttl to %s\n", active, dto.Username, helper.TtlToString(dto.Ttl))
+		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, helper.TtlToString(dto.LastActive))
 	}
 
 	if res == "" {

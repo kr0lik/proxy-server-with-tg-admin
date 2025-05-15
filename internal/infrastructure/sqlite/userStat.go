@@ -84,14 +84,19 @@ func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 func (s *Storage) DeleteUserStat(username string) error {
 	const op = "storage.sqlite.DeleteUserStat"
 
-	stmt, err := s.db.Prepare("DELETE FROM user_stat WHERE username = ?")
+	userId, err := s.getUserId(username)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	stmt, err := s.db.Prepare("DELETE FROM user_stat WHERE user_id = ?")
 	defer stmt.Close()
 
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	_, err = stmt.Exec(username)
+	_, err = stmt.Exec(userId)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -133,4 +138,18 @@ func (s *Storage) ListUsersWithStat() ([]*commands.UsersWithStatDto, error) {
 	}
 
 	return list, nil
+}
+
+func (s *Storage) DeleteUserWithStat(username string) error {
+	const op = "storage.sqlite.DeleteUserWithStat"
+
+	if err := s.DeleteUserStat(username); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if err := s.DeleteUser(username); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

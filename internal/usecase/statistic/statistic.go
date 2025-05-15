@@ -20,8 +20,8 @@ func (s *statistic) Increment(in, out uint64) {
 }
 
 func (s *statistic) GetAndClean() (in, out uint64) {
-	in = atomic.LoadUint64(&s.in)
-	out = atomic.LoadUint64(&s.out)
+	in = atomic.SwapUint64(&s.in, 0)
+	out = atomic.SwapUint64(&s.out, 0)
 
 	return
 }

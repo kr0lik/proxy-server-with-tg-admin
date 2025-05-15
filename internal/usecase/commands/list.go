@@ -20,7 +20,7 @@ type StorageInterface interface {
 	UpdateTtl(username string, ttl time.Time) error
 	GetStatistic(username string) (*entity.UserStat, error)
 	ListUsersWithStat() ([]*UsersWithStatDto, error)
-	DeleteUser(username string) error
+	DeleteUserWithStat(username string) error
 	DeleteUserStat(username string) error
 }
 
@@ -56,6 +56,7 @@ func New(storage StorageInterface, authenticator *auth.Authenticator) *List {
 			&listUsers{storage: storage},
 			&getStatistic{storage: storage},
 			&deleteUser{storage: storage, authenticator: authenticator},
+			&clearStatistic{storage: storage},
 		},
 	}
 }

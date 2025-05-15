@@ -7,6 +7,7 @@ import (
 	"github.com/things-go/go-socks5/statute"
 	"io"
 	"proxy-server-with-tg-admin/internal/helper"
+	"proxy-server-with-tg-admin/internal/infrastructure/sqlite"
 	"proxy-server-with-tg-admin/internal/usecase/auth"
 )
 
@@ -39,7 +40,7 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 
-		if errors.Is(err, auth.ErrUserPassword) {
+		if errors.Is(err, auth.ErrUserPassword) || errors.Is(err, sqlite.ErrUserNotFound) {
 			return nil, fmt.Errorf("%s: %w (%s:%s %s)", op, err, username, password, userAddr)
 		}
 

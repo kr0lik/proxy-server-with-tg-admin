@@ -28,15 +28,11 @@ func (c *deleteUser) Run(args ...string) (string, error) {
 		username = args[0]
 	}
 
-	if err := c.storage.DeleteUser(username); err != nil {
+	if err := c.storage.DeleteUserWithStat(username); err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	c.authenticator.Forget(username)
 
-	if err := c.storage.DeleteUserStat(username); err != nil {
-		return "", fmt.Errorf("%s: %w", op, err)
-	}
-
-	return fmt.Sprintf("User %s deleted", username), nil
+	return fmt.Sprintf("User *%s* deleted", username), nil
 }

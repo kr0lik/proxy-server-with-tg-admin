@@ -5,6 +5,8 @@ Socks5 Proxy server with remote control via telegram bot.
 
 ### Supported commands:
 
+/top
+
 /create {username} [password] [ttl]
 
 /activate {username} [ttl]
@@ -20,6 +22,8 @@ Socks5 Proxy server with remote control via telegram bot.
 /delete {username}
 
 /users
+
+/clear {username}
 
 
 ## Using
