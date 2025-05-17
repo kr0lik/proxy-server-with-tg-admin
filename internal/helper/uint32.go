@@ -1,23 +1,14 @@
 package helper
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 const uint32MaxDigits = 10
 
 func Uint32ToString(n uint32) string {
-	var buf [uint32MaxDigits]byte
-	i := len(buf)
-
-	for n >= uint32MaxDigits {
-		i--
-		buf[i] = byte('0' + n%uint32MaxDigits)
-		n /= uint32MaxDigits
-	}
-	i--
-	buf[i] = byte('0' + n)
-
-	// return slice without zeros
-	return string(buf[i:])
+	return strconv.FormatUint(uint64(n), 10)
 }
 
 func StringToUint32(s string) (uint32, error) {

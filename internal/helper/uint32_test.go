@@ -17,6 +17,8 @@ func TestStringToUint32(t *testing.T) {
 		{1, "1"},
 		{3, "3"},
 		{42, "42"},
+		{300, "300"},
+		{30, "30"},
 		{1234567890, "1234567890"},
 		{4294967295, "4294967295"},
 	}
@@ -49,6 +51,8 @@ func TestUint32ToString(t *testing.T) {
 		{"-1", 0, true},
 		{"123abc", 0, true},
 		{"0000000001", 1, false},
+		{"300", 300, false},
+		{"30", 30, false},
 	}
 
 	for _, tt := range tests {
@@ -69,7 +73,7 @@ func TestUint32ToString(t *testing.T) {
 func TestRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	for i := range uint32(10000) {
+	for i := range uint32(1000000) {
 		s := helper.Uint32ToString(i)
 		r, err := helper.StringToUint32(s)
 		if err != nil || r != i {

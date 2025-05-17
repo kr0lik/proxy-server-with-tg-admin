@@ -211,6 +211,27 @@ func (s *Storage) DeleteUser(username string) error {
 	return nil
 }
 
+func (s *Storage) RenameUser(username, usernameTo string) error {
+	const op = "storage.sqlite.RenameUser"
+
+	stmt, err := s.db.Prepare("UPDATE user SET username = ? WHERE username = ?")
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(usernameTo, username)
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return ErrUserExists
+		}
+
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
 func (s *Storage) getEntity(row scanRow) (*entity.User, error) {
 	const op = "storage.sqlite.getEntity"
 	var ttl int64

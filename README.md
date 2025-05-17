@@ -13,17 +13,19 @@ Socks5 Proxy server with remote control via telegram bot.
 
 /deactivate {username}
 
+/rename {username} {username}
+
 /password {username} [password]
 
 /ttl {username} [ttl]
 
 /stat {username}
 
+/clear {username}
+
 /delete {username}
 
 /users
-
-/clear {username}
 
 
 ## Using

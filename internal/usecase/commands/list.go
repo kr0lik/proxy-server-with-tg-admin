@@ -16,6 +16,7 @@ type StorageInterface interface {
 	CreateUser(username, password string) (uint32, error)
 	ActivateUser(username string) error
 	DeactivateUser(username string) error
+	RenameUser(username, usernameTo string) error
 	UpdatePassword(username, password string) error
 	UpdateTtl(username string, ttl time.Time) error
 	GetStatistic(username string) (*entity.UserStat, error)
@@ -51,12 +52,13 @@ func New(storage StorageInterface, authenticator *auth.Authenticator) *List {
 			&createUser{storage: storage},
 			&activateUser{storage: storage, authenticator: authenticator},
 			&deactivateUser{storage: storage, authenticator: authenticator},
+			&renameUser{storage: storage, authenticator: authenticator},
 			&updatePassword{storage: storage, authenticator: authenticator},
 			&updateTtl{storage: storage, authenticator: authenticator},
-			&listUsers{storage: storage},
-			&getStatistic{storage: storage},
 			&deleteUser{storage: storage, authenticator: authenticator},
+			&getStatistic{storage: storage},
 			&clearStatistic{storage: storage},
+			&listUsers{storage: storage},
 		},
 	}
 }

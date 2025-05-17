@@ -2,6 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"github.com/shirou/gopsutil/v3/process"
+	"math"
+	"os"
 	"proxy-server-with-tg-admin/internal/helper"
 	"runtime"
 )
@@ -18,20 +21,38 @@ func (c *top) Arguments() []string {
 }
 
 func (c *top) Run(args ...string) (string, error) {
+	return c.top() + "\n" + c.runtime(), nil
+}
+
+func (c *top) top() string {
+	pid := os.Getpid()
+	if pid > math.MaxInt32 || pid < math.MinInt32 {
+		return fmt.Sprintf("%d pid is out of range", pid)
+	}
+
+	proc, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return ""
+	}
+
+	cpuPercent, _ := proc.CPUPercent()
+	memInfo, _ := proc.MemoryInfo()
+
+	return fmt.Sprintf("CPU: %.2f%%\n", cpuPercent) +
+		fmt.Sprintf("RSS: %s\n", helper.BytesFormat(memInfo.RSS)) +
+		fmt.Sprintf("VMS: %s\n", helper.BytesFormat(memInfo.VMS)) +
+		fmt.Sprintf("HWM: %s\n", helper.BytesFormat(memInfo.HWM))
+}
+
+func (c *top) runtime() string {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
-	res := ""
-
-	res += fmt.Sprintf("NumGoroutine = %v\n", runtime.NumGoroutine())
-	res += fmt.Sprintf("Sys = %s\n", helper.BytesFormat(m.Sys))
-	res += fmt.Sprintf("Alloc = %s\n", helper.BytesFormat(m.Alloc))
-	res += fmt.Sprintf("TotalAlloc = %s\n", helper.BytesFormat(m.TotalAlloc))
-	res += fmt.Sprintf("HeapInuse = %s\n", helper.BytesFormat(m.HeapInuse))
-	res += fmt.Sprintf("HeapAlloc  = %s\n", helper.BytesFormat(m.HeapAlloc))
-	res += fmt.Sprintf("Lookups = %v\n", m.Lookups)
-	res += fmt.Sprintf("NumGC = %v\n", m.NumGC)
-	res += fmt.Sprintf("GCCPUFraction = %.2f%%\n", m.GCCPUFraction*100)
-
-	return res, nil
+	return fmt.Sprintf("NumGoroutine = %v\n", runtime.NumGoroutine()) +
+		fmt.Sprintf("Sys = %s\n", helper.BytesFormat(m.Sys)) +
+		fmt.Sprintf("Alloc = %s\n", helper.BytesFormat(m.Alloc)) +
+		fmt.Sprintf("TotalAlloc = %s\n", helper.BytesFormat(m.TotalAlloc)) +
+		fmt.Sprintf("HeapInuse = %s\n", helper.BytesFormat(m.HeapInuse)) +
+		fmt.Sprintf("HeapAlloc  = %s\n", helper.BytesFormat(m.HeapAlloc)) +
+		fmt.Sprintf("NumGC = %v\n", m.NumGC)
 }

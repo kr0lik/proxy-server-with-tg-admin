@@ -50,6 +50,16 @@ func registerCommands(bot *tele.Bot, commands *commands.List) {
 
 			return nil
 		})
+
+		bot.Handle(tele.OnText, func(c tele.Context) error {
+			text := c.Text()
+
+			if text[0] == '/' {
+				return c.Send("Unexpected command. Type /start to see available commands.")
+			}
+
+			return nil
+		})
 	}
 }
 
