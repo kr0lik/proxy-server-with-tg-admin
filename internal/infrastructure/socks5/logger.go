@@ -10,5 +10,5 @@ type Logger struct {
 }
 
 func (cl *Logger) Errorf(format string, v ...interface{}) {
-	cl.logger.Error("Socks5.server", "internal", fmt.Sprintf(format, v...))
+	cl.logger.Info("Socks5.server", "internal", fmt.Sprintf(format, v...))
 }

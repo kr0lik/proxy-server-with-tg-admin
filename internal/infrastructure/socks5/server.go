@@ -10,6 +10,8 @@ import (
 	"sync"
 )
 
+type userIdKey string
+
 type Server struct {
 	*socks5.Server
 	wg     sync.WaitGroup
@@ -21,8 +23,9 @@ func New(statisticTracker *statistic.Tracker, authenticator *auth.Authenticator,
 	srv := socks5.NewServer(
 		socks5.WithAuthMethods([]socks5.Authenticator{&UserPassAuthenticator{credentials: &CredentialStore{authenticator: authenticator, logger: logger}}}),
 		socks5.WithLogger(&Logger{logger: logger}),
+		socks5.WithRule(&Rule{logger: logger}),
 		socks5.WithDialAndRequest(dialAndRequest(statisticTracker, logger)),
-		socks5.WithDial(dial(logger)),
+		socks5.WithDial(dial(statisticTracker, logger)),
 	)
 
 	return &Server{
@@ -33,15 +36,19 @@ func New(statisticTracker *statistic.Tracker, authenticator *auth.Authenticator,
 }
 
 func (s *Server) ListenAndServe(network, addr string) error {
+	const op = "socks5.Serve"
+
 	l, err := net.Listen(network, addr)
 	if err != nil {
-		return fmt.Errorf("socks5.ListenAndServe: %w", err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return s.Serve(l)
 }
 
 func (s *Server) Serve(l net.Listener) error {
+	const op = "socks5.Serve"
+
 	defer l.Close()
 
 	for {
@@ -51,7 +58,7 @@ func (s *Server) Serve(l net.Listener) error {
 		default:
 			conn, err := l.Accept()
 			if err != nil {
-				return fmt.Errorf("socks5.Serve: failed to accept connection: %w", err)
+				return fmt.Errorf("%s: failed to accept connection: %w", op, err)
 			}
 
 			errCh := make(chan error)
@@ -73,7 +80,7 @@ func (s *Server) Serve(l net.Listener) error {
 					}
 				case err = <-errCh:
 					if err != nil {
-						s.logger.Error("Socks5.server", "serve connection", err)
+						s.logger.Error(op, "serve connection", err)
 					}
 				}
 			}()
