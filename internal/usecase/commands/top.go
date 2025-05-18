@@ -7,6 +7,8 @@ import (
 	"os"
 	"proxy-server-with-tg-admin/internal/helper"
 	"runtime"
+	"strings"
+	"time"
 )
 
 type top struct {
@@ -21,7 +23,7 @@ func (c *top) Arguments() []string {
 }
 
 func (c *top) Run(args ...string) (string, error) {
-	return c.top() + "\n" + c.runtime(), nil
+	return c.top() + c.selfStatus() + c.runtime(), nil
 }
 
 func (c *top) top() string {
@@ -35,13 +37,37 @@ func (c *top) top() string {
 		return ""
 	}
 
-	cpuPercent, _ := proc.CPUPercent()
+	var total float64
+	samples := 5
+	for range samples {
+		cpu, err := proc.CPUPercent()
+		if err != nil {
+			break
+		}
+
+		total += cpu
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	averageCPU := total / float64(samples)
 	memInfo, _ := proc.MemoryInfo()
 
-	return fmt.Sprintf("CPU: %.2f%%\n", cpuPercent) +
+	return fmt.Sprintf("CPU: %.2f%%\n", averageCPU) +
 		fmt.Sprintf("RSS: %s\n", helper.BytesFormat(memInfo.RSS)) +
-		fmt.Sprintf("VMS: %s\n", helper.BytesFormat(memInfo.VMS)) +
-		fmt.Sprintf("HWM: %s\n", helper.BytesFormat(memInfo.HWM))
+		fmt.Sprintf("VMS: %s\n", helper.BytesFormat(memInfo.VMS))
+}
+
+func (c *top) selfStatus() string {
+	data, _ := os.ReadFile("/proc/self/status")
+	lines := strings.Split(string(data), "\n")
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "Threads:") {
+			return line + "\n"
+		}
+	}
+
+	return ""
 }
 
 func (c *top) runtime() string {

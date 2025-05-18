@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"proxy-server-with-tg-admin/internal/helper"
+	"time"
 )
 
 type listUsers struct {
@@ -32,7 +33,7 @@ func (c *listUsers) Run(args ...string) (string, error) {
 		}
 
 		res += fmt.Sprintf("%s *%s* with ttl to %s\n", active, dto.Username, helper.TtlToString(dto.Ttl))
-		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, helper.TtlToString(dto.LastActive))
+		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, dto.LastActive.Format(time.DateOnly))
 	}
 
 	if res == "" {

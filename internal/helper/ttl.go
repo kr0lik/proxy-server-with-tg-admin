@@ -29,5 +29,5 @@ func TtlToString(input time.Time) string {
 		return "-"
 	}
 
-	return input.Format(time.DateTime)
+	return input.Format("2006-01-02 15:04")
 }

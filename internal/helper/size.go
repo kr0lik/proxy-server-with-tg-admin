@@ -11,12 +11,12 @@ const (
 func BytesFormat(bytes uint64) string {
 	switch {
 	case bytes >= gb:
-		return fmt.Sprintf("%.2f GB", float64(bytes)/gb)
+		return fmt.Sprintf("%.2fGB", float64(bytes)/gb)
 	case bytes >= mb:
-		return fmt.Sprintf("%.2f MB", float64(bytes)/mb)
+		return fmt.Sprintf("%.2fMB", float64(bytes)/mb)
 	case bytes >= kb:
-		return fmt.Sprintf("%.2f KB", float64(bytes)/kb)
+		return fmt.Sprintf("%.2fKB", float64(bytes)/kb)
 	default:
-		return fmt.Sprintf("%d B", bytes)
+		return fmt.Sprintf("%dB", bytes)
 	}
 }
