@@ -80,8 +80,7 @@ func (s *Storage) getUserId(username string) (uint32, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(username).Scan(&id)
-	if err != nil {
+	if err := stmt.QueryRow(username).Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return id, ErrUserNotFound
 		}

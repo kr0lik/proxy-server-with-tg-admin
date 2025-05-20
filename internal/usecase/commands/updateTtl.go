@@ -48,5 +48,10 @@ func (c *updateTtl) Run(args ...string) (string, error) {
 
 	c.authenticator.UpdateUserTtl(username, ttl)
 
-	return fmt.Sprintf("Ttl updated for *%s* to %s\n", username, helper.TtlToString(ttl)), nil
+	withTtl := helper.TtlToString(ttl)
+	if withTtl == "" {
+		withTtl = "unlimited"
+	}
+
+	return fmt.Sprintf("Ttl updated for *%s* to %s\n", username, withTtl), nil
 }

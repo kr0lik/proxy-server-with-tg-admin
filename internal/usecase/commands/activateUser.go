@@ -52,5 +52,10 @@ func (c *activateUser) Run(args ...string) (string, error) {
 
 	c.authenticator.UpdateUserTtl(username, ttl)
 
-	return fmt.Sprintf("User *%s* activated with ttl to %s", username, helper.TtlToString(ttl)), nil
+	withTtl := helper.TtlToString(ttl)
+	if withTtl != "" {
+		withTtl = " with ttl to " + withTtl
+	}
+
+	return fmt.Sprintf("User *%s* activated %s", username, withTtl), nil
 }

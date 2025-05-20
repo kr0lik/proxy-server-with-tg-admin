@@ -32,7 +32,12 @@ func (c *listUsers) Run(args ...string) (string, error) {
 			active = "⚫"
 		}
 
-		res += fmt.Sprintf("%s *%s* with ttl to %s\n", active, dto.Username, helper.TtlToString(dto.Ttl))
+		withTtl := helper.TtlToString(dto.Ttl)
+		if withTtl != "" {
+			withTtl = " with ttl to " + withTtl
+		}
+
+		res += fmt.Sprintf("%s *%s* %s\n", active, dto.Username, withTtl)
 		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, dto.LastActive.Format(time.DateOnly))
 	}
 

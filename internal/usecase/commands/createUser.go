@@ -62,5 +62,10 @@ func (c *createUser) Run(args ...string) (string, error) {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	return fmt.Sprintf("Created user with credentials \"*%s:%s*\" and ttl to %s", username, password, helper.TtlToString(ttl)), nil
+	withTtl := helper.TtlToString(ttl)
+	if withTtl != "" {
+		withTtl = " with ttl to " + withTtl
+	}
+
+	return fmt.Sprintf("Created user with credentials \"*%s:%s*\" %s\n", username, password, withTtl), nil
 }
