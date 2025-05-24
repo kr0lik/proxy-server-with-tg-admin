@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"proxy-server-with-tg-admin/internal/config"
+	"proxy-server-with-tg-admin/internal/infrastructure/adblock"
 	"proxy-server-with-tg-admin/internal/infrastructure/socks5"
 	"proxy-server-with-tg-admin/internal/infrastructure/sqlite"
 	"proxy-server-with-tg-admin/internal/infrastructure/telegram"
@@ -19,17 +20,25 @@ func main() {
 	cfg := config.MustLoad()
 
 	logger := setupLogger(cfg.Env())
-	logger.Debug("starting", "env", cfg.Env(), "port", cfg.PortSocks5(), "db path", cfg.SqlitePath())
+	logger.Debug("starting", "env", cfg.Env(), "port", cfg.PortSocks5(), "db path", cfg.DataPath())
 
 	logger.Info("Storage starting")
 
-	storage, err := sqlite.New(cfg.SqlitePath(), "server.db", logger)
+	storage, err := sqlite.New(cfg.DataPath(), logger)
 	if err != nil {
 		logger.Error("Failed to start storage", "err", err)
 
 		return
 	}
 	defer storage.Close()
+
+	logger.Info("Ad blocker running")
+	adBlock := adblock.New(logger)
+	if err := adBlock.Load(); err != nil {
+		logger.Error("Failed to load adblock", "err", err)
+
+		return
+	}
 
 	logger.Info("Use cases starting")
 
@@ -62,7 +71,7 @@ func main() {
 
 	logger.Info("Socks5 server starting")
 
-	socks5Server := socks5.New(statisticTracker, authenticator, logger)
+	socks5Server := socks5.New(statisticTracker, adBlock, authenticator, logger)
 	defer socks5Server.Shutdown()
 
 	go func() {

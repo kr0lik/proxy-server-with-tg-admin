@@ -18,7 +18,7 @@ type Config struct {
 	portSocks5       uint
 	telegramBotToken string
 	telegramAdminId  int64
-	sqlitePath       string
+	dataPath         string
 }
 
 func (c *Config) Env() string {
@@ -37,19 +37,19 @@ func (c *Config) TelegramAdminId() int64 {
 	return c.telegramAdminId
 }
 
-func (c *Config) SqlitePath() string {
-	return strings.TrimRight(c.sqlitePath, string(os.PathSeparator))
+func (c *Config) DataPath() string {
+	return strings.TrimRight(c.dataPath, string(os.PathSeparator))
 }
 
 func MustLoad() *Config {
 	var portSocks5 uint
-	var env, sqlitePath string
+	var env, dataPath string
 	var telegramBotToken string
 	var telegramAdminId int64
 
 	flag.UintVar(&portSocks5, "port-socks5", defaultSocks5Port, "SOCKS5 server port")
 	flag.StringVar(&env, "env", EnvProd, "Application environment: EnvDev or EnvProd")
-	flag.StringVar(&sqlitePath, "sqlite-path", "./.data", "Storage path")
+	flag.StringVar(&dataPath, "data-path", "./.data", "Storage path")
 	flag.StringVar(&telegramBotToken, "telegram-bot-token", "", "Telegram bot token")
 	flag.Int64Var(&telegramAdminId, "telegram-admin-id", 0, "Telegram admin id")
 	flag.Parse()
@@ -72,13 +72,13 @@ func MustLoad() *Config {
 		panic("Telegram command id is empty")
 	}
 
-	if sqlitePath == "" {
-		panic("Storage path is empty")
+	if dataPath == "" {
+		panic("Data path is empty")
 	}
 
-	if _, err := os.Stat(sqlitePath); os.IsNotExist(err) {
+	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
 		const folderPerm = 0o750
-		if err := os.MkdirAll(sqlitePath, folderPerm); err != nil {
+		if err := os.MkdirAll(dataPath, folderPerm); err != nil {
 			panic(fmt.Errorf("could not create sqlite path: %w", err))
 		}
 	}
@@ -88,6 +88,6 @@ func MustLoad() *Config {
 		portSocks5:       portSocks5,
 		telegramBotToken: telegramBotToken,
 		telegramAdminId:  telegramAdminId,
-		sqlitePath:       sqlitePath,
+		dataPath:         dataPath,
 	}
 }

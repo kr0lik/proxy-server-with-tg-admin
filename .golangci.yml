@@ -71,3 +71,12 @@ linters:
       - path: internal/usecase/statistic/statistic.go
         linters:
           - nonamedreturns
+      - path: internal/infrastructure/adblock/sources.go
+        text: "sources"
+        linters:
+          - gochecknoglobals
+      - path: internal/infrastructure/adblock/adblock.go
+        linters:
+          - mnd
+          - noctx
+          - errcheck
