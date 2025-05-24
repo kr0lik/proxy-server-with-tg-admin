@@ -9,13 +9,17 @@ import (
 	"time"
 )
 
+const fileName = "server.db"
+
 type Storage struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func New(storagePath, filename string, logger *slog.Logger) (*Storage, error) {
-	db, err := sql.Open("sqlite", storagePath+string(os.PathSeparator)+filename+"?_busy_timeout=1000")
+func New(storagePath string, logger *slog.Logger) (*Storage, error) {
+	storePath := storagePath + string(os.PathSeparator) + fileName
+
+	db, err := sql.Open("sqlite", storePath+"?_busy_timeout=1000")
 	if err != nil {
 		return nil, fmt.Errorf("sqlite.open: %w", err)
 	}

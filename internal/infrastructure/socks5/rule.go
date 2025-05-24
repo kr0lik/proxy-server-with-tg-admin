@@ -5,14 +5,29 @@ import (
 	"github.com/things-go/go-socks5"
 	"log/slog"
 	"proxy-server-with-tg-admin/internal/helper"
+	"proxy-server-with-tg-admin/internal/infrastructure/adblock"
 )
 
 type Rule struct {
-	logger *slog.Logger
+	adBlock *adblock.Adblock
+	logger  *slog.Logger
 }
 
 func (r Rule) Allow(ctx context.Context, request *socks5.Request) (context.Context, bool) {
 	const op = "socks5.Rule.Allow"
+
+	dest := request.DestAddr
+	host := dest.FQDN
+	if host == "" && dest.IP != nil {
+		host = dest.String()
+	}
+
+	if r.adBlock.IsMatch(host) {
+		r.logger.Warn("Adblock", "ad blocked", host)
+
+		return nil, false
+	}
+
 	userIdStr, exist := request.AuthContext.Payload["userId"]
 	if !exist {
 		r.logger.Error(op, "context", "missing userId")

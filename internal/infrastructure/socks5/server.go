@@ -5,6 +5,7 @@ import (
 	"github.com/things-go/go-socks5"
 	"log/slog"
 	"net"
+	"proxy-server-with-tg-admin/internal/infrastructure/adblock"
 	"proxy-server-with-tg-admin/internal/usecase/auth"
 	"proxy-server-with-tg-admin/internal/usecase/statistic"
 	"sync"
@@ -19,13 +20,14 @@ type Server struct {
 	logger *slog.Logger
 }
 
-func New(statisticTracker *statistic.Tracker, authenticator *auth.Authenticator, logger *slog.Logger) *Server {
+func New(statisticTracker *statistic.Tracker, adBlock *adblock.Adblock, authenticator *auth.Authenticator, logger *slog.Logger) *Server {
 	srv := socks5.NewServer(
 		socks5.WithAuthMethods([]socks5.Authenticator{&UserPassAuthenticator{credentials: &CredentialStore{authenticator: authenticator, logger: logger}}}),
 		socks5.WithLogger(&Logger{logger: logger}),
-		socks5.WithRule(&Rule{logger: logger}),
+		socks5.WithRule(&Rule{adBlock: adBlock, logger: logger}),
 		socks5.WithDialAndRequest(dialAndRequest(statisticTracker, logger)),
 		socks5.WithDial(dial(statisticTracker, logger)),
+		socks5.WithResolver(DNSResolver{adBlock: adBlock}),
 	)
 
 	return &Server{
