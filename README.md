@@ -39,12 +39,12 @@ docker run -v .:/app -w /app --rm golang:1.24-alpine go build -o socks5-proxy-se
 Run bin file
 
 ```
-socks5-proxy-server-with-tg --port-socks5=1080 --sqlite-path=./.data --telegram-bot-token= --telegram-admin-id=
+socks5-proxy-server-with-tg --port-socks5=1080 --data-path=./.data --telegram-bot-token= --telegram-admin-id=
 ```
 
 Where:
  - port-socks5 - Socks5 proxy server port
- - sqlite-path - Path where will be storing server data
+ - data-path - Path where will be storing server data
  - telegram-bot-token - Your bot token
  - telegram-admin-id - Your user id
 
