@@ -7,26 +7,43 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
+
+const updateAtHour = 3
 
 var domainRegex = regexp.MustCompile(`^(?i)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$`)
 
 type Adblock struct {
 	domains map[string]struct{}
-	client  *http.Client
+	client  http.Client
 	logger  *slog.Logger
 }
 
 func New(logger *slog.Logger) *Adblock {
 	return &Adblock{
 		domains: make(map[string]struct{}),
-		client:  &http.Client{},
-		logger:  logger,
+		client: http.Client{
+			Transport: &http.Transport{DisableKeepAlives: true},
+		},
+		logger: logger,
 	}
 }
 
-func (a *Adblock) Load() error {
+func (a *Adblock) Start() error {
 	const op = "adblock.Start"
+
+	if err := a.load(); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	go a.scheduleUpdate()
+
+	return nil
+}
+
+func (a *Adblock) load() error {
+	const op = "adblock.load"
 
 	for _, url := range sources {
 		err := a.downloadAndAddDomains(url)
@@ -38,6 +55,25 @@ func (a *Adblock) Load() error {
 	a.logger.Info("Adblock", "loaded domains", len(a.domains))
 
 	return nil
+}
+
+func (a *Adblock) scheduleUpdate() {
+	for {
+		now := time.Now()
+		next := time.Date(now.Year(), now.Month(), now.Day(), updateAtHour, 0, 0, 0, now.Location())
+
+		if now.After(next) {
+			next = next.Add(24 * time.Hour)
+		}
+
+		sleepDuration := time.Until(next)
+
+		time.Sleep(sleepDuration)
+
+		if err := a.load(); err != nil {
+			a.logger.Error("failed to reload adblock list", "err", err)
+		}
+	}
 }
 
 func (a *Adblock) IsMatch(host string) bool {

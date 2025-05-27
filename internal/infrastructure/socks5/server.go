@@ -38,7 +38,7 @@ func New(statisticTracker *statistic.Tracker, adBlock *adblock.Adblock, authenti
 }
 
 func (s *Server) ListenAndServe(network, addr string) error {
-	const op = "socks5.Serve"
+	const op = "socks5.ListenAndServe"
 
 	l, err := net.Listen(network, addr)
 	if err != nil {

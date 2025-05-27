@@ -20,13 +20,7 @@ type scanRow interface {
 func (s *Storage) CreateUser(username, password string) (uint32, error) {
 	const op = "storage.sqlite.CreateUser"
 
-	stmt, err := s.db.Prepare("INSERT INTO  user(username, password) VALUES(?, ?)")
-	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	res, err := stmt.Exec(username, password)
+	res, err := s.db.Exec("INSERT INTO  user(username, password) VALUES(?, ?)", username, password)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return 0, ErrUserExists
@@ -50,13 +44,7 @@ func (s *Storage) CreateUser(username, password string) (uint32, error) {
 func (s *Storage) GetUser(username string) (*entity.User, error) {
 	const op = "storage.sqlite.GetUser"
 
-	stmt, err := s.db.Prepare("SELECT id, username, password, active, ttl, updated FROM user WHERE username = ?")
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	row := stmt.QueryRow(username)
+	row := s.db.QueryRow("SELECT id, username, password, active, ttl, updated FROM user WHERE username = ?", username)
 	user, err := s.getEntity(row)
 
 	if err != nil {
@@ -74,13 +62,8 @@ func (s *Storage) getUserId(username string) (uint32, error) {
 	const op = "storage.sqlite.getUserId"
 	var id uint32
 
-	stmt, err := s.db.Prepare("SELECT id FROM user WHERE username = ?")
+	err := s.db.QueryRow("SELECT id FROM user WHERE username = ?", username).Scan(&id)
 	if err != nil {
-		return id, fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	if err := stmt.QueryRow(username).Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return id, ErrUserNotFound
 		}
@@ -122,13 +105,7 @@ func (s *Storage) ListUsers() ([]*entity.User, error) {
 func (s *Storage) ActivateUser(username string) error {
 	const op = "storage.sqlite.ActivateUser"
 
-	stmt, err := s.db.Prepare("UPDATE user SET active = true, updated = CURRENT_TIMESTAMP WHERE username = ?")
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(username)
+	_, err := s.db.Exec("UPDATE user SET active = true, updated = CURRENT_TIMESTAMP WHERE username = ?", username)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -139,13 +116,7 @@ func (s *Storage) ActivateUser(username string) error {
 func (s *Storage) DeactivateUser(username string) error {
 	const op = "storage.sqlite.DeactivateUser"
 
-	stmt, err := s.db.Prepare("UPDATE user SET active = false, updated = CURRENT_TIMESTAMP WHERE username = ?")
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(username)
+	_, err := s.db.Exec("UPDATE user SET active = false, updated = CURRENT_TIMESTAMP WHERE username = ?", username)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -156,13 +127,7 @@ func (s *Storage) DeactivateUser(username string) error {
 func (s *Storage) UpdatePassword(username, password string) error {
 	const op = "storage.sqlite.UpdatePassword"
 
-	stmt, err := s.db.Prepare("UPDATE user SET password = ?, updated = CURRENT_TIMESTAMP WHERE username = ?")
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(password, username)
+	_, err := s.db.Exec("UPDATE user SET password = ?, updated = CURRENT_TIMESTAMP WHERE username = ?", password, username)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -173,19 +138,13 @@ func (s *Storage) UpdatePassword(username, password string) error {
 func (s *Storage) UpdateTtl(username string, ttl time.Time) error {
 	const op = "storage.sqlite.UpdateTtl"
 
-	stmt, err := s.db.Prepare("UPDATE user SET ttl = ?, updated = CURRENT_TIMESTAMP WHERE username = ?")
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
 	ttlToUpdate := ttl.Unix()
 
 	if ttlToUpdate < 1 {
 		ttlToUpdate = 0
 	}
 
-	_, err = stmt.Exec(ttlToUpdate, username)
+	_, err := s.db.Exec("UPDATE user SET ttl = ?, updated = CURRENT_TIMESTAMP WHERE username = ?", ttlToUpdate, username)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -196,13 +155,7 @@ func (s *Storage) UpdateTtl(username string, ttl time.Time) error {
 func (s *Storage) DeleteUser(username string) error {
 	const op = "storage.sqlite.DeleteUser"
 
-	stmt, err := s.db.Prepare("DELETE FROM user WHERE username = ?")
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(username)
+	_, err := s.db.Exec("DELETE FROM user WHERE username = ?", username)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -213,13 +166,7 @@ func (s *Storage) DeleteUser(username string) error {
 func (s *Storage) RenameUser(username, usernameTo string) error {
 	const op = "storage.sqlite.RenameUser"
 
-	stmt, err := s.db.Prepare("UPDATE user SET username = ? WHERE username = ?")
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(usernameTo, username)
+	_, err := s.db.Exec("UPDATE user SET username = ? WHERE username = ?", usernameTo, username)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			return ErrUserExists
@@ -252,13 +199,7 @@ func (s *Storage) countUsers() (int, error) {
 
 	count := 0
 
-	stmt, err := s.db.Prepare("SELECT COUNT(id) FROM user")
-	if err != nil {
-		return count, fmt.Errorf("%s: %w", op, err)
-	}
-	defer stmt.Close()
-
-	err = stmt.QueryRow().Scan(&count)
+	err := s.db.QueryRow("SELECT COUNT(id) FROM user").Scan(&count)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return count, ErrUserNotFound

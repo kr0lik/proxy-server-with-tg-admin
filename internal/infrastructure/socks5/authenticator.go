@@ -24,6 +24,26 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 	if _, err := writer.Write([]byte{statute.VersionSocks5, statute.MethodUserPassAuth}); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+
+	ctx, err := a.authenticate(reader, userAddr)
+	if err != nil {
+		if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthFailure}); err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthSuccess}); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return ctx, nil
+}
+
+func (a UserPassAuthenticator) authenticate(reader io.Reader, userAddr string) (*socks5.AuthContext, error) {
+	const op = "socks5.authenticate"
+
 	// get user and user's password
 	nup, err := statute.ParseUserPassRequest(reader)
 	if err != nil {
@@ -36,10 +56,6 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 	// Verify
 	userId, err := a.credentials.GetUserId(username, password, userAddr)
 	if err != nil {
-		if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthFailure}); err != nil {
-			return nil, fmt.Errorf("%s: %w", op, err)
-		}
-
 		if errors.Is(err, auth.ErrUserPassword) || errors.Is(err, sqlite.ErrUserNotFound) {
 			return nil, fmt.Errorf("%s: %w (%s:%s %s)", op, err, username, password, userAddr)
 		}
@@ -48,15 +64,7 @@ func (a UserPassAuthenticator) Authenticate(reader io.Reader, writer io.Writer, 
 	}
 
 	if userId == 0 {
-		if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthFailure}); err != nil {
-			return nil, fmt.Errorf("%s: %w", op, err)
-		}
-
 		return nil, fmt.Errorf("%s: zero user id returned", op)
-	}
-
-	if _, err := writer.Write([]byte{statute.UserPassAuthVersion, statute.AuthSuccess}); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	// Done

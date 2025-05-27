@@ -14,7 +14,7 @@ func TestAdblockLoad(t *testing.T) {
 
 	a := adblock.New(logger)
 
-	err := a.Load()
+	err := a.Start()
 	if err != nil {
 		t.Fatalf("Adblock.Load() error: %v", err)
 	}
