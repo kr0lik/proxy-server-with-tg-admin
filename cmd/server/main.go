@@ -34,7 +34,7 @@ func main() {
 
 	logger.Info("Ad blocker running")
 	adBlock := adblock.New(logger)
-	if err := adBlock.Load(); err != nil {
+	if err := adBlock.Start(); err != nil {
 		logger.Error("Failed to load adblock", "err", err)
 
 		return
