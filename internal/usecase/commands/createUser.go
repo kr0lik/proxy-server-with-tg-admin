@@ -8,6 +8,8 @@ import (
 )
 
 type createUser struct {
+	ip      string
+	port    uint
 	storage StorageInterface
 }
 
@@ -67,5 +69,5 @@ func (c *createUser) Run(args ...string) (string, error) {
 		withTtl = " with ttl to " + withTtl
 	}
 
-	return fmt.Sprintf("Created user with credentials \"*%s:%s*\" %s\n", username, password, withTtl), nil
+	return fmt.Sprintf("Created user: \"*%s:%s@%s:%d*\" %s\n", username, password, c.ip, c.port, withTtl), nil
 }

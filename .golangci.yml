@@ -7,7 +7,6 @@ linters:
     - depguard
     - exhaustruct
     - funcorder
-    - funlen
     - ireturn
     - godot
     - godox
@@ -15,6 +14,19 @@ linters:
     - revive
     - varnamelen
     - wsl
+
+  settings:
+    funlen:
+      lines: 150
+      statements: 80
+    mnd:
+      #ignored-functions:
+      ignored-numbers:
+        - "2"
+        - "5"
+        - "10"
+        - "24"
+        - "100"
 
   exclusions:
     rules:
@@ -60,14 +72,6 @@ linters:
         text: "Get returns interface"
         linters:
           - ireturn
-      - path: internal/usecase/commands/createUser.go
-        text: "Magic number: 2"
-        linters:
-          - mnd
-      - path: internal/usecase/commands/top.go
-        text: "Magic number: 100"
-        linters:
-          - mnd
       - path: internal/usecase/statistic/statistic.go
         linters:
           - nonamedreturns
@@ -77,6 +81,4 @@ linters:
           - gochecknoglobals
       - path: internal/infrastructure/adblock/adblock.go
         linters:
-          - mnd
-          - noctx
           - errcheck

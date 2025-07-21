@@ -2,6 +2,7 @@ package adblock
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -25,6 +26,7 @@ func New(logger *slog.Logger) *Adblock {
 		domains: make(map[string]struct{}),
 		client: http.Client{
 			Transport: &http.Transport{DisableKeepAlives: true},
+			Timeout:   5 * time.Second,
 		},
 		logger: logger,
 	}
@@ -85,7 +87,12 @@ func (a *Adblock) IsMatch(host string) bool {
 func (a *Adblock) downloadAndAddDomains(url string) error {
 	const op = "adblock.downloadAndAddDomains"
 
-	resp, err := a.client.Get(url)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	resp, err := a.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

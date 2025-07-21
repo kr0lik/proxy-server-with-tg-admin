@@ -12,6 +12,8 @@ import (
 )
 
 type top struct {
+	ip   string
+	port uint
 }
 
 func (c *top) Id() string {
@@ -52,7 +54,8 @@ func (c *top) top() string {
 	averageCPU := total / float64(samples)
 	memInfo, _ := proc.MemoryInfo()
 
-	return fmt.Sprintf("CPU: %.2f%%\n", averageCPU) +
+	return fmt.Sprintf("%s:%d\n", c.ip, c.port) +
+		fmt.Sprintf("CPU: %.2f%%\n", averageCPU) +
 		fmt.Sprintf("RSS: %s\n", helper.BytesFormat(memInfo.RSS)) +
 		fmt.Sprintf("VMS: %s\n", helper.BytesFormat(memInfo.VMS))
 }

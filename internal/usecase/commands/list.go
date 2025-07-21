@@ -45,15 +45,15 @@ type List struct {
 	list []Cmd
 }
 
-func New(storage StorageInterface, authenticator *auth.Authenticator) *List {
+func New(ip string, port uint, storage StorageInterface, authenticator *auth.Authenticator) *List {
 	return &List{
 		list: []Cmd{
-			&top{},
-			&createUser{storage: storage},
+			&top{ip: ip, port: port},
+			&createUser{ip: ip, port: port, storage: storage},
 			&activateUser{storage: storage, authenticator: authenticator},
 			&deactivateUser{storage: storage, authenticator: authenticator},
 			&renameUser{storage: storage, authenticator: authenticator},
-			&updatePassword{storage: storage, authenticator: authenticator},
+			&updatePassword{ip: ip, port: port, storage: storage, authenticator: authenticator},
 			&updateTtl{storage: storage, authenticator: authenticator},
 			&deleteUser{storage: storage, authenticator: authenticator},
 			&getStatistic{storage: storage},

@@ -43,7 +43,7 @@ func main() {
 	logger.Info("Use cases starting")
 
 	authenticator := auth.New(storage, logger)
-	cmdList := commands.New(storage, authenticator)
+	cmdList := commands.New(cfg.Ip(), cfg.PortSocks5(), storage, authenticator)
 
 	statisticTracker := statistic.New(storage, logger)
 	logger.Info("Statistic tracker running")

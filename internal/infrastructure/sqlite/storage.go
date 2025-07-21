@@ -35,7 +35,7 @@ func New(storagePath string, logger *slog.Logger) (*Storage, error) {
 }
 
 func (s *Storage) open() error {
-	db, err := sql.Open("sqlite", s.storePath+"?_busy_timeout=1000")
+	db, err := sql.Open("sqlite", s.storePath)
 	if err != nil {
 		return fmt.Errorf("sqlite.open: %w", err)
 	}
@@ -49,6 +49,8 @@ func (s *Storage) open() error {
 	if err != nil {
 		return fmt.Errorf("sqlite.exec PRAGMA wal_autocheckpoint: %w", err)
 	}
+
+	s.db = db
 
 	return nil
 }

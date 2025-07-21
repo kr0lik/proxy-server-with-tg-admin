@@ -7,6 +7,8 @@ import (
 )
 
 type updatePassword struct {
+	ip            string
+	port          uint
 	storage       StorageInterface
 	authenticator *auth.Authenticator
 }
@@ -41,5 +43,5 @@ func (c *updatePassword) Run(args ...string) (string, error) {
 
 	c.authenticator.Forget(username)
 
-	return fmt.Sprintf("New credentials: \"*%s:%s*\"", username, password), nil
+	return fmt.Sprintf("New credentials: \"*%s:%s@%s:%d*\"", username, password, c.ip, c.port), nil
 }
