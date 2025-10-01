@@ -29,6 +29,7 @@ func GetMyIp(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
+
 	defer func() { _ = resp.Body.Close() }()
 
 	ip, err := io.ReadAll(resp.Body)

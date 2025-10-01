@@ -92,30 +92,31 @@ func (s *Storage) ListUsersWithStat() ([]*commands.UsersWithStatDto, error) {
 
 	list := make([]*commands.UsersWithStatDto, 0, userCount)
 
-	rows, err := s.db.Query("SELECT u.username, u.active, u.ttl, COALESCE(us.traffic_in_total, 0), COALESCE(us.traffic_out_total, 0), COALESCE(us.days_active, 0), COALESCE(strftime('%s', us.updated), 0) FROM user u LEFT JOIN user_stat us ON u.id = us.user_id")
-	defer rows.Close()
-
+	rows, err := s.db.Query("SELECT u.username, u.active, u.ttl, COALESCE(us.traffic_in_total, 0), COALESCE(us.traffic_out_total, 0), COALESCE(us.days_active, 0), us.updated FROM user u LEFT JOIN user_stat us ON u.id = us.user_id")
 	if err != nil {
 		return list, fmt.Errorf("%s: %w", op, err)
 	}
+	defer rows.Close()
 
 	if rows.Err() != nil {
 		return list, fmt.Errorf("%s: %w", op, rows.Err())
 	}
 
 	for rows.Next() {
-		var ttl, updated int64
 		dto := &commands.UsersWithStatDto{}
 
-		err := rows.Scan(&dto.Username, &dto.Active, &ttl, &dto.TotalIn, &dto.TotalOut, &dto.DyesActive, &updated)
-		if err == nil {
-			dto.Ttl = toTime(ttl)
-			dto.LastActive = toTime(updated)
+		var updated sql.NullTime
 
-			list = append(list, dto)
-		} else {
+		err := rows.Scan(&dto.Username, &dto.Active, &dto.Ttl, &dto.TotalIn, &dto.TotalOut, &dto.DyesActive, &updated)
+		if err != nil {
 			return list, fmt.Errorf("%s: %w", op, err)
 		}
+
+		if updated.Valid {
+			dto.LastActive = updated.Time
+		}
+
+		list = append(list, dto)
 	}
 
 	return list, nil

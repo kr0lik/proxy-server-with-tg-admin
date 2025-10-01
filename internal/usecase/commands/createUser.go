@@ -35,6 +35,7 @@ func (c *createUser) Run(args ...string) (string, error) {
 	ttl := time.Now().Add(entity.DefaultUserTtl)
 
 	secondInput := ""
+
 	if len(args) > 2 {
 		password = args[1]
 		secondInput = args[2]

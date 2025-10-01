@@ -81,10 +81,12 @@ func getOrDetectIP(ip string) string {
 	if ip != "" {
 		return ip
 	}
+
 	myIp, err := helper.GetMyIp(context.Background())
 	if err != nil {
 		panic("Server ip: " + err.Error())
 	}
+
 	if myIp == "" {
 		panic("Server ip is empty")
 	}
@@ -99,18 +101,23 @@ func validateConfigParams(env, ip string, portSocks5 uint, telegramBotToken stri
 	default:
 		panic(fmt.Sprintf("Invalid env: %s (must be %s or %s)", env, EnvDev, EnvProd))
 	}
+
 	if ip == "" {
 		panic("Server ip is empty")
 	}
+
 	if portSocks5 == 0 {
 		panic("SOCKS5 server port is empty")
 	}
+
 	if telegramBotToken == "" {
 		panic("Telegram bot token is empty")
 	}
+
 	if telegramAdminId == 0 {
 		panic("Telegram command id is empty")
 	}
+
 	if dataPath == "" {
 		panic("Data path is empty")
 	}
@@ -119,6 +126,7 @@ func validateConfigParams(env, ip string, portSocks5 uint, telegramBotToken stri
 func ensureDataPathExists(dataPath string) {
 	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
 		const folderPerm = 0o750
+
 		if err := os.MkdirAll(dataPath, folderPerm); err != nil {
 			panic(fmt.Errorf("could not create sqlite path: %w", err))
 		}

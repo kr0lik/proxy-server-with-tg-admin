@@ -45,8 +45,8 @@ func (s *Storage) GetUser(username string) (*entity.User, error) {
 	const op = "storage.sqlite.GetUser"
 
 	row := s.db.QueryRow("SELECT id, username, password, active, ttl, updated FROM user WHERE username = ?", username)
-	user, err := s.getEntity(row)
 
+	user, err := s.getEntity(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, ErrUserNotFound
@@ -180,16 +180,13 @@ func (s *Storage) RenameUser(username, usernameTo string) error {
 
 func (s *Storage) getEntity(row scanRow) (*entity.User, error) {
 	const op = "storage.sqlite.getEntity"
-	var ttl int64
 
 	user := &entity.User{}
 
-	err := row.Scan(&user.ID, &user.Username, &user.Password, &user.Active, &ttl, &user.Updated)
+	err := row.Scan(&user.ID, &user.Username, &user.Password, &user.Active, &user.Ttl, &user.Updated)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-
-	user.Ttl = toTime(ttl)
 
 	return user, nil
 }

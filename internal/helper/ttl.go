@@ -25,7 +25,7 @@ func StringToTtl(input string) (time.Time, error) {
 }
 
 func TtlToString(input time.Time) string {
-	if input.IsZero() {
+	if input.IsZero() || input.Unix() == 0 {
 		return ""
 	}
 

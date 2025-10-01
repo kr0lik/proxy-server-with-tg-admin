@@ -7,15 +7,24 @@ linters:
     - depguard
     - exhaustruct
     - funcorder
-    - ireturn
     - godot
     - godox
     - lll
     - revive
     - varnamelen
+    - err113
     - wsl
+    - wsl_v5
+    - noinlineerr
+    - noctx
 
   settings:
+    errcheck:
+      exclude-functions:
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (*database/sql.Stmt).Close
+
     funlen:
       lines: 150
       statements: 80
@@ -30,44 +39,6 @@ linters:
 
   exclusions:
     rules:
-      - path: internal/infrastructure/sqlite/user.go
-        text: "id out of range"
-        linters:
-          - err113
-      - path: internal/infrastructure/socks5/connection.go
-        text: "negative byte count"
-        linters:
-          - err113
-      - path: internal/infrastructure/socks5/authenticator.go
-        text: "zero user id returned"
-        linters:
-          - err113
-      - path: internal/usecase/auth/authenticator.go
-        text: "userId is not uint32"
-        linters:
-          - err113
-      - path: internal/helper/ttl.go
-        text: "empty input"
-        linters:
-          - err113
-      - path: internal/helper/uint32.go
-        text: "StringToUint32: invalid digit %q in string"
-        linters:
-          - err113
-      - path: internal/infrastructure/sqlite/
-        text: "stmt.Close"
-        linters:
-          - errcheck
-          - staticcheck
-      - path: internal/infrastructure/sqlite/
-        text: "rows.Close"
-        linters:
-          - errcheck
-          - staticcheck
-      - path: internal/infrastructure/socks5/server.go
-        text: "Error return value of `l.Close` is not checked"
-        linters:
-          - errcheck
       - path: internal/usecase/commands/list.go
         text: "Get returns interface"
         linters:
@@ -76,9 +47,6 @@ linters:
         linters:
           - nonamedreturns
       - path: internal/infrastructure/adblock/sources.go
-        text: "sources"
+        text: "sources is a global variable"
         linters:
           - gochecknoglobals
-      - path: internal/infrastructure/adblock/adblock.go
-        linters:
-          - errcheck

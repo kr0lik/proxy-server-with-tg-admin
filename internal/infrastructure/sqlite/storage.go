@@ -3,10 +3,9 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"log/slog"
-	_ "modernc.org/sqlite"
 	"os"
-	"time"
 )
 
 const fileName = "server.db"
@@ -35,19 +34,21 @@ func New(storagePath string, logger *slog.Logger) (*Storage, error) {
 }
 
 func (s *Storage) open() error {
-	db, err := sql.Open("sqlite", s.storePath)
+	db, err := sql.Open("sqlite3", s.storePath)
 	if err != nil {
 		return fmt.Errorf("sqlite.open: %w", err)
 	}
 
-	_, err = db.Exec("PRAGMA journal_mode=WAL;")
+	_, err = db.Exec(`
+		PRAGMA journal_mode=WAL;
+		PRAGMA synchronous = NORMAL;
+		PRAGMA wal_autocheckpoint = 500;
+		PRAGMA journal_size_limit = 41943040;
+		PRAGMA busy_timeout = 10000;
+		PRAGMA locking_mode = NORMAL;
+	`)
 	if err != nil {
-		return fmt.Errorf("sqlite.exec PRAGMA journal_mode: %w", err)
-	}
-
-	_, err = db.Exec("PRAGMA wal_autocheckpoint = 1000;")
-	if err != nil {
-		return fmt.Errorf("sqlite.exec PRAGMA wal_autocheckpoint: %w", err)
+		return fmt.Errorf("sqlite.exec PRAGMA: %w", err)
 	}
 
 	s.db = db
@@ -61,14 +62,4 @@ func (s *Storage) Close() {
 	}
 
 	s.logger.Debug("Sqlite db closed")
-}
-
-func toTime(t int64) time.Time {
-	const possibleZeroTime = 86400
-
-	if time.Unix(t, 0).Unix() > possibleZeroTime {
-		return time.Unix(t, 0)
-	}
-
-	return time.Time{}
 }

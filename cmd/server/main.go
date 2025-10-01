@@ -33,12 +33,9 @@ func main() {
 	defer storage.Close()
 
 	logger.Info("Ad blocker running")
-	adBlock := adblock.New(logger)
-	if err := adBlock.Start(); err != nil {
-		logger.Error("Failed to load adblock", "err", err)
 
-		return
-	}
+	adBlock := adblock.New(logger)
+	adBlock.Start()
 
 	logger.Info("Use cases starting")
 
@@ -47,6 +44,7 @@ func main() {
 
 	statisticTracker := statistic.New(storage, logger)
 	logger.Info("Statistic tracker running")
+
 	statisticTracker.Start()
 	defer statisticTracker.Stop()
 
@@ -80,6 +78,7 @@ func main() {
 
 		if err := socks5Server.ListenAndServe("tcp", serverAddr); err != nil {
 			logger.Error("Socks5 server", "ListenAndServe", err)
+
 			done <- os.Interrupt
 
 			return

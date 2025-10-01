@@ -37,8 +37,13 @@ func (c *listUsers) Run(args ...string) (string, error) {
 			withTtl = " with ttl to " + withTtl
 		}
 
+		lastAt := "-"
+		if dto.LastActive.Unix() > 0 {
+			lastAt = dto.LastActive.Format(time.DateOnly)
+		}
+
 		res += fmt.Sprintf("%s *%s* %s\n", active, dto.Username, withTtl)
-		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, dto.LastActive.Format(time.DateOnly))
+		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, lastAt)
 	}
 
 	if res == "" {

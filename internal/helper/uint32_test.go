@@ -63,6 +63,7 @@ func TestUint32ToString(t *testing.T) {
 			if (err != nil) != tt.hasError {
 				t.Errorf("Expected error: %v, got: %v", tt.hasError, err)
 			}
+
 			if !tt.hasError && actual != tt.expected {
 				t.Errorf("Expected %d, got %d", tt.expected, actual)
 			}
@@ -76,6 +77,7 @@ func TestRoundTrip(t *testing.T) {
 	for i := range uint32(1000000) {
 		s := helper.Uint32ToString(i)
 		r, err := helper.StringToUint32(s)
+
 		if err != nil || r != i {
 			t.Fatalf("Round-trip failed for %d: got string %s, returned int %d", i, s, r)
 		}

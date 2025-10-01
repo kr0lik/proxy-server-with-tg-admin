@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"fmt"
-	_ "modernc.org/sqlite"
 )
 
 func (s *Storage) init() error {

@@ -32,16 +32,14 @@ func New(logger *slog.Logger) *Adblock {
 	}
 }
 
-func (a *Adblock) Start() error {
+func (a *Adblock) Start() {
 	const op = "adblock.Start"
 
 	if err := a.load(); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		a.logger.Error(op, "load domains", err)
 	}
 
 	go a.scheduleUpdate()
-
-	return nil
 }
 
 func (a *Adblock) load() error {
@@ -110,7 +108,8 @@ func (a *Adblock) downloadAndAddDomains(url string) error {
 
 func (a *Adblock) addDomains(resp *http.Response) error {
 	const op = "adblock.addDomains"
-	defer resp.Body.Close()
+
+	defer resp.Body.Close() //nolint:errcheck
 
 	scanner := bufio.NewScanner(resp.Body)
 
@@ -134,6 +133,7 @@ func (a *Adblock) addDomains(resp *http.Response) error {
 
 		domain := fields[1]
 		domain = strings.TrimSpace(domain)
+
 		if domainRegex.MatchString(domain) {
 			a.domains[domain] = struct{}{}
 		}

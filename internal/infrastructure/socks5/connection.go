@@ -10,6 +10,7 @@ import (
 
 type connection struct {
 	net.Conn
+
 	bytesRead        uint64
 	bytesWritten     uint64
 	userId           uint32

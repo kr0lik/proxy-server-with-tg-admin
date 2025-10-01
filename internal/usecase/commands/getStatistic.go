@@ -38,7 +38,8 @@ func (c *getStatistic) Run(args ...string) (string, error) {
 		updated = userStat.Updated.Format(time.DateOnly)
 	}
 
-	res := fmt.Sprintf("Last activity *%s* %s.\n", username, updated) +
+	res := fmt.Sprintf("*%s* stats:\n", username) +
+		fmt.Sprintf("Last activity at %s.\n", updated) +
 		fmt.Sprintf("in: %s\n", helper.BytesFormat(userStat.TrafficInDay)) +
 		fmt.Sprintf("out: %s\n", helper.BytesFormat(userStat.TrafficOutDay)) +
 		fmt.Sprintf("Active dyes: %d\n\n", userStat.DaysActive) +

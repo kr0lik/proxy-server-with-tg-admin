@@ -72,20 +72,24 @@ func (c *cache) checkup() {
 		var toForget []string
 
 		c.mu.RLock()
+
 		for username, state := range c.data {
 			if c.isNeedForget(username, state) {
 				toForget = append(toForget, username)
 			}
 		}
+
 		c.mu.RUnlock()
 
 		if len(toForget) > 0 {
 			for _, username := range toForget {
 				c.mu.Lock()
+
 				st, exist := c.data[username]
 				if exist && c.isNeedForget(username, st) {
 					delete(c.data, username)
 				}
+
 				c.mu.Unlock()
 			}
 		}
@@ -113,6 +117,7 @@ func (c *cache) isNeedForget(username string, state *state) bool {
 func (c *cache) forget(username string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	delete(c.data, username)
 }
 

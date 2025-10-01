@@ -15,6 +15,7 @@ type userIdKey string
 
 type Server struct {
 	*socks5.Server
+
 	wg     sync.WaitGroup
 	stopCh chan struct{}
 	logger *slog.Logger
@@ -51,7 +52,7 @@ func (s *Server) ListenAndServe(network, addr string) error {
 func (s *Server) Serve(l net.Listener) error {
 	const op = "socks5.Serve"
 
-	defer l.Close()
+	defer l.Close() //nolint:errcheck
 
 	for {
 		select {
@@ -70,6 +71,7 @@ func (s *Server) Serve(l net.Listener) error {
 			}()
 
 			s.wg.Add(1)
+
 			go func() {
 				defer s.wg.Done()
 
@@ -95,6 +97,7 @@ func (s *Server) Shutdown() {
 	close(s.stopCh)
 
 	waitConnectionsCh := make(chan struct{})
+
 	go func() {
 		s.wg.Wait()
 		close(waitConnectionsCh)

@@ -40,7 +40,9 @@ func (c *top) top() string {
 	}
 
 	var total float64
+
 	samples := 5
+
 	for range samples {
 		cpu, err := proc.CPUPercent()
 		if err != nil {
@@ -48,6 +50,7 @@ func (c *top) top() string {
 		}
 
 		total += cpu
+
 		time.Sleep(100 * time.Millisecond)
 	}
 

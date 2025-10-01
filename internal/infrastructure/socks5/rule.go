@@ -18,6 +18,7 @@ func (r Rule) Allow(ctx context.Context, request *socks5.Request) (context.Conte
 
 	dest := request.DestAddr
 	host := dest.FQDN
+
 	if host == "" && dest.IP != nil {
 		host = dest.String()
 	}
