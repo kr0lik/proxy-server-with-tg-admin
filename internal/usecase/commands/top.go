@@ -20,11 +20,17 @@ func (c *top) Id() string {
 	return "top"
 }
 
+func (c *top) IsForAdminOnly() bool { return true }
+
 func (c *top) Arguments() []string {
 	return []string{}
 }
 
-func (c *top) Run(args ...string) (string, error) {
+func (c *top) Description() string {
+	return "Show top"
+}
+
+func (c *top) Run(telegramId int64, args ...string) (string, error) {
 	return c.top() + c.selfStatus() + c.runtime(), nil
 }
 
@@ -51,7 +57,7 @@ func (c *top) top() string {
 
 		total += cpu
 
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond) //nolint: mnd
 	}
 
 	averageCPU := total / float64(samples)

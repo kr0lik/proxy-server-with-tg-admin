@@ -8,21 +8,27 @@ import (
 	"time"
 )
 
-type updateTtl struct {
+type userTtlUpdate struct {
 	storage       StorageInterface
 	authenticator *auth.Authenticator
 }
 
-func (c *updateTtl) Id() string {
+func (c *userTtlUpdate) Id() string {
 	return "ttl"
 }
 
-func (c *updateTtl) Arguments() []string {
+func (c *userTtlUpdate) IsForAdminOnly() bool { return true }
+
+func (c *userTtlUpdate) Arguments() []string {
 	return []string{usernameArg, "[ttl]"}
 }
 
-func (c *updateTtl) Run(args ...string) (string, error) {
-	const op = "commands.updateTtl.Run"
+func (c *userTtlUpdate) Description() string {
+	return "Change ttl for user"
+}
+
+func (c *userTtlUpdate) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userTtlUpdate.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -53,5 +59,5 @@ func (c *updateTtl) Run(args ...string) (string, error) {
 		withTtl = "unlimited"
 	}
 
-	return fmt.Sprintf("Ttl updated for *%s* to %s\n", username, withTtl), nil
+	return fmt.Sprintf("InviteTokenTtl updated for *%s* to %s\n", username, withTtl), nil
 }

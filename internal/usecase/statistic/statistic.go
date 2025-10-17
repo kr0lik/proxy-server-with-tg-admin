@@ -19,7 +19,7 @@ func (s *statistic) Increment(in, out uint64) {
 	}
 }
 
-func (s *statistic) GetAndClean() (in, out uint64) {
+func (s *statistic) GetAndClean() (in, out uint64) { //nolint: nonamedreturns
 	in = atomic.SwapUint64(&s.in, 0)
 	out = atomic.SwapUint64(&s.out, 0)
 

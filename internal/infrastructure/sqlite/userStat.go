@@ -13,7 +13,7 @@ func (s *Storage) AddStat(userId uint32, bytesIn, bytesOut uint64) error {
 	const op = "storage.sqlite.AddStat"
 
 	_, err := s.db.Exec(`
-INSERT INTO  user_stat(user_id, traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated) VALUES(?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+INSERT INTO  user_stat(user_id, traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated) VALUES($1, $2, $3, $2, $3, 1, CURRENT_TIMESTAMP)
 ON CONFLICT(user_id) DO UPDATE SET
 traffic_in_total=traffic_in_total + excluded.traffic_in_total,
 traffic_out_total=traffic_out_total + excluded.traffic_out_total,
@@ -32,7 +32,7 @@ days_active=CASE
 	THEN days_active + 1
 	ELSE days_active
 END,
-updated = CURRENT_TIMESTAMP`, userId, bytesIn, bytesOut, bytesIn, bytesOut)
+updated = CURRENT_TIMESTAMP`, userId, bytesIn, bytesOut)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -40,23 +40,14 @@ updated = CURRENT_TIMESTAMP`, userId, bytesIn, bytesOut, bytesIn, bytesOut)
 	return nil
 }
 
-func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
-	const op = "storage.sqlite.GetStatistic"
-
-	userId, err := s.getUserId(username)
-	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
-			return nil, ErrUserNotFound
-		}
-
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
+func (s *Storage) GetStatistic(userId uint32) (*entity.UserStat, error) {
+	const op = "storage.sqlite.GetStatisticByUsername"
 
 	userStat := &entity.UserStat{}
 	userStat.UserID = userId
 	userStat.Updated = time.Time{}
 
-	err = s.db.QueryRow("SELECT traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated FROM user_stat WHERE user_id = ?", userId).
+	err := s.db.QueryRow("SELECT traffic_in_day, traffic_out_day, traffic_in_total, traffic_out_total, days_active, updated FROM user_stat WHERE user_id = ?", userId).
 		Scan(&userStat.TrafficInDay, &userStat.TrafficOutDay, &userStat.TrafficInTotal, &userStat.TrafficOutTotal, &userStat.DaysActive, &userStat.Updated)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -69,15 +60,10 @@ func (s *Storage) GetStatistic(username string) (*entity.UserStat, error) {
 	return userStat, nil
 }
 
-func (s *Storage) DeleteUserStat(username string) error {
+func (s *Storage) DeleteUserStat(userId uint32) error {
 	const op = "storage.sqlite.DeleteUserStat"
 
-	userId, err := s.getUserId(username)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	_, err = s.db.Exec("DELETE FROM user_stat WHERE user_id = ?", userId)
+	_, err := s.db.Exec("DELETE FROM user_stat WHERE user_id = $1", userId)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -92,7 +78,7 @@ func (s *Storage) ListUsersWithStat() ([]*commands.UsersWithStatDto, error) {
 
 	list := make([]*commands.UsersWithStatDto, 0, userCount)
 
-	rows, err := s.db.Query("SELECT u.username, u.active, u.ttl, COALESCE(us.traffic_in_total, 0), COALESCE(us.traffic_out_total, 0), COALESCE(us.days_active, 0), us.updated FROM user u LEFT JOIN user_stat us ON u.id = us.user_id")
+	rows, err := s.db.Query("SELECT u.username, COALESCE(u.telegram_id, 0), u.active, u.ttl, COALESCE(us.traffic_in_total, 0), COALESCE(us.traffic_out_total, 0), COALESCE(us.days_active, 0), us.updated FROM user u LEFT JOIN user_stat us ON u.id = us.user_id")
 	if err != nil {
 		return list, fmt.Errorf("%s: %w", op, err)
 	}
@@ -107,7 +93,7 @@ func (s *Storage) ListUsersWithStat() ([]*commands.UsersWithStatDto, error) {
 
 		var updated sql.NullTime
 
-		err := rows.Scan(&dto.Username, &dto.Active, &dto.Ttl, &dto.TotalIn, &dto.TotalOut, &dto.DyesActive, &updated)
+		err := rows.Scan(&dto.Username, &dto.TelegramId, &dto.Active, &dto.Ttl, &dto.TotalIn, &dto.TotalOut, &dto.DyesActive, &updated)
 		if err != nil {
 			return list, fmt.Errorf("%s: %w", op, err)
 		}
@@ -120,18 +106,4 @@ func (s *Storage) ListUsersWithStat() ([]*commands.UsersWithStatDto, error) {
 	}
 
 	return list, nil
-}
-
-func (s *Storage) DeleteUserWithStat(username string) error {
-	const op = "storage.sqlite.DeleteUserWithStat"
-
-	if err := s.DeleteUserStat(username); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	if err := s.DeleteUser(username); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	return nil
 }
