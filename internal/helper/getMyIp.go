@@ -17,7 +17,7 @@ func GetMyIp(ctx context.Context) (string, error) {
 
 	client := &http.Client{
 		Transport: &http.Transport{DisableKeepAlives: true},
-		Timeout:   10 * time.Second,
+		Timeout:   10 * time.Second, //nolint: mnd
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://api.ipify.org", nil)

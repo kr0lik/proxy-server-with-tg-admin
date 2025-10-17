@@ -17,6 +17,7 @@ type User struct {
 	ID           uint32
 	Username     string    `json:"username"`
 	Password     string    `json:"password"`
+	TelegramId   int64     `json:"telegramId"`
 	LimitSpeed   uint32    `json:"limitSpeed"`
 	LimitTraffic uint32    `json:"limitTraffic"`
 	LimitType    LimitType `json:"limitType"`

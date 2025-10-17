@@ -5,21 +5,27 @@ import (
 	"proxy-server-with-tg-admin/internal/usecase/auth"
 )
 
-type deactivateUser struct {
+type userDeactivate struct {
 	storage       StorageInterface
 	authenticator *auth.Authenticator
 }
 
-func (c *deactivateUser) Id() string {
+func (c *userDeactivate) Id() string {
 	return "deactivate"
 }
 
-func (c *deactivateUser) Arguments() []string {
+func (c *userDeactivate) IsForAdminOnly() bool { return true }
+
+func (c *userDeactivate) Arguments() []string {
 	return []string{usernameArg}
 }
 
-func (c *deactivateUser) Run(args ...string) (string, error) {
-	const op = "commands.deactivateUser.Run"
+func (c *userDeactivate) Description() string {
+	return "Deactivate user"
+}
+
+func (c *userDeactivate) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userDeactivate.Run"
 	var username string
 
 	if len(args) == 0 {

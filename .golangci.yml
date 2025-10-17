@@ -17,6 +17,7 @@ linters:
     - wsl_v5
     - noinlineerr
     - noctx
+    - interfacebloat
 
   settings:
     errcheck:
@@ -28,24 +29,9 @@ linters:
     funlen:
       lines: 150
       statements: 80
-    mnd:
-      #ignored-functions:
-      ignored-numbers:
-        - "2"
-        - "5"
-        - "10"
-        - "24"
-        - "100"
 
   exclusions:
     rules:
-      - path: internal/usecase/commands/list.go
-        text: "Get returns interface"
-        linters:
-          - ireturn
-      - path: internal/usecase/statistic/statistic.go
-        linters:
-          - nonamedreturns
       - path: internal/infrastructure/adblock/sources.go
         text: "sources is a global variable"
         linters:

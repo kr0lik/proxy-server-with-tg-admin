@@ -6,22 +6,31 @@ import (
 	"time"
 )
 
-type listUsers struct {
+type userList struct {
 	storage StorageInterface
 }
 
-func (c *listUsers) Id() string {
+func (c *userList) Id() string {
 	return "users"
 }
 
-func (c *listUsers) Arguments() []string {
+func (c *userList) IsForAdminOnly() bool { return true }
+
+func (c *userList) Arguments() []string {
 	return []string{}
 }
 
-func (c *listUsers) Run(args ...string) (string, error) {
-	const op = "commands.listUsers.Run"
+func (c *userList) Description() string {
+	return "List users"
+}
+
+func (c *userList) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userList.Run"
 
 	list, err := c.storage.ListUsersWithStat()
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
 
 	res := ""
 
@@ -42,16 +51,17 @@ func (c *listUsers) Run(args ...string) (string, error) {
 			lastAt = dto.LastActive.Format(time.DateOnly)
 		}
 
-		res += fmt.Sprintf("%s *%s* %s\n", active, dto.Username, withTtl)
+		hasTg := ""
+		if dto.TelegramId > 0 {
+			hasTg = "tg"
+		}
+
+		res += fmt.Sprintf("%s *%s* %s %s\n", active, dto.Username, withTtl, hasTg)
 		res += fmt.Sprintf("Traffic in %s, out %s, dayes %d, last at %s\n", helper.BytesFormat(dto.TotalIn), helper.BytesFormat(dto.TotalOut), dto.DyesActive, lastAt)
 	}
 
 	if res == "" {
-		res = "Empty"
-	}
-
-	if err != nil {
-		return res, fmt.Errorf("%s: %w", op, err)
+		res = "No users found"
 	}
 
 	return res, nil

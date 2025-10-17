@@ -8,21 +8,27 @@ import (
 	"time"
 )
 
-type activateUser struct {
+type userActivate struct {
 	storage       StorageInterface
 	authenticator *auth.Authenticator
 }
 
-func (c *activateUser) Id() string {
+func (c *userActivate) Id() string {
 	return "activate"
 }
 
-func (c *activateUser) Arguments() []string {
+func (c *userActivate) IsForAdminOnly() bool { return true }
+
+func (c *userActivate) Arguments() []string {
 	return []string{usernameArg, "[ttl]"}
 }
 
-func (c *activateUser) Run(args ...string) (string, error) {
-	const op = "commands.activateUser.Run"
+func (c *userActivate) Description() string {
+	return "Activate user"
+}
+
+func (c *userActivate) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userActivate.Run"
 	var username string
 
 	if len(args) == 0 {

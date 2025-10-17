@@ -7,22 +7,28 @@ import (
 	"time"
 )
 
-type createUser struct {
+type userCreate struct {
 	ip      string
 	port    uint
 	storage StorageInterface
 }
 
-func (c *createUser) Id() string {
+func (c *userCreate) Id() string {
 	return "create"
 }
 
-func (c *createUser) Arguments() []string {
+func (c *userCreate) IsForAdminOnly() bool { return true }
+
+func (c *userCreate) Arguments() []string {
 	return []string{usernameArg, "[password]", "[ttl]"}
 }
 
-func (c *createUser) Run(args ...string) (string, error) {
-	const op = "commands.createUser.Run"
+func (c *userCreate) Description() string {
+	return "Create user"
+}
+
+func (c *userCreate) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userCreate.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -36,7 +42,7 @@ func (c *createUser) Run(args ...string) (string, error) {
 
 	secondInput := ""
 
-	if len(args) > 2 {
+	if len(args) > 2 { //nolint: mnd
 		password = args[1]
 		secondInput = args[2]
 	} else if len(args) > 1 {

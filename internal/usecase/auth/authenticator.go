@@ -14,7 +14,7 @@ var ErrUserInactive = errors.New("user inactive")
 var ErrUserTtl = errors.New("user ttl exceeded")
 
 type StorageInterface interface {
-	GetUser(username string) (*entity.User, error)
+	GetUserByUsername(username string) (*entity.User, error)
 }
 
 type Authenticator struct {
@@ -64,7 +64,7 @@ func (a *Authenticator) Authenticate(username, password string) (uint32, error) 
 func (a *Authenticator) authenticateOnce(username, password string) (uint32, error) {
 	const op = "auth.Authenticator.authenticateOnce"
 
-	user, err := a.storage.GetUser(username)
+	user, err := a.storage.GetUserByUsername(username)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}

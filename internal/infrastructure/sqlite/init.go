@@ -9,13 +9,17 @@ func (s *Storage) init() error {
     	id INTEGER PRIMARY KEY AUTOINCREMENT,
     	username varchar(32) NOT NULL,
     	password varchar(32) NOT NULL,
+    	telegram_id INTEGER DEFAULT NULL,
+    	invite_token varchar(32) DEFAULT NULL,
     	limit_speed INTEGER DEFAULT 0 NOT NULL,
     	limit_traffic INTEGER DEFAULT 0 NOT NULL,
     	limit_type INTEGER DEFAULT 0 NOT NULL,
     	active bool DEFAULT FALSE NOT NULL,
     	ttl TIMESTAMP DEFAULT 0 NOT NULL,
     	updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-	); CREATE UNIQUE INDEX IF NOT EXISTS username_uniq_idx ON user(username);`)
+	);
+	CREATE UNIQUE INDEX IF NOT EXISTS username_uniq_idx ON user(username);
+	CREATE UNIQUE INDEX IF NOT EXISTS telegram_id_uniq_idx ON user(telegram_id);`)
 	if err != nil {
 		return fmt.Errorf("sql.exec user: %w", err)
 	}

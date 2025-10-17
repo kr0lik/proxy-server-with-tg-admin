@@ -26,7 +26,7 @@ func New(logger *slog.Logger) *Adblock {
 		domains: make(map[string]struct{}),
 		client: http.Client{
 			Transport: &http.Transport{DisableKeepAlives: true},
-			Timeout:   5 * time.Second,
+			Timeout:   5 * time.Second, //nolint: mnd
 		},
 		logger: logger,
 	}
@@ -48,7 +48,7 @@ func (a *Adblock) load() error {
 	for _, url := range sources {
 		err := a.downloadAndAddDomains(url)
 		if err != nil {
-			return fmt.Errorf("%s: %w", op, err)
+			a.logger.Error(op, "err", err)
 		}
 	}
 
@@ -63,7 +63,7 @@ func (a *Adblock) scheduleUpdate() {
 		next := time.Date(now.Year(), now.Month(), now.Day(), updateAtHour, 0, 0, 0, now.Location())
 
 		if now.After(next) {
-			next = next.Add(24 * time.Hour)
+			next = next.Add(24 * time.Hour) //nolint: mnd
 		}
 
 		sleepDuration := time.Until(next)
@@ -122,7 +122,7 @@ func (a *Adblock) addDomains(resp *http.Response) error {
 		}
 
 		fields := strings.Fields(line)
-		if len(fields) < 2 {
+		if len(fields) < 2 { //nolint: mnd
 			line = strings.TrimSpace(line)
 			if domainRegex.MatchString(line) {
 				a.domains[line] = struct{}{}
