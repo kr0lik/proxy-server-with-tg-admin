@@ -6,20 +6,26 @@ import (
 	"time"
 )
 
-type getStatistic struct {
+type userStatisticGet struct {
 	storage StorageInterface
 }
 
-func (c *getStatistic) Id() string {
+func (c *userStatisticGet) Id() string {
 	return "stat"
 }
 
-func (c *getStatistic) Arguments() []string {
+func (c *userStatisticGet) IsForAdminOnly() bool { return true }
+
+func (c *userStatisticGet) Arguments() []string {
 	return []string{usernameArg}
 }
 
-func (c *getStatistic) Run(args ...string) (string, error) {
-	const op = "commands.getStatistic.Run"
+func (c *userStatisticGet) Description() string {
+	return "Get user statistic"
+}
+
+func (c *userStatisticGet) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userStatisticGet.Run"
 	var username string
 
 	if len(args) == 0 {
@@ -28,7 +34,12 @@ func (c *getStatistic) Run(args ...string) (string, error) {
 		username = args[0]
 	}
 
-	userStat, err := c.storage.GetStatistic(username)
+	userId, err := c.storage.GetUserIdByUsername(username)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	userStat, err := c.storage.GetStatistic(userId)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
