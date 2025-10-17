@@ -8,21 +8,27 @@ import (
 
 var ErrSecondUsername = errors.New("second username is required")
 
-type renameUser struct {
+type userRename struct {
 	storage       StorageInterface
 	authenticator *auth.Authenticator
 }
 
-func (c *renameUser) Id() string {
+func (c *userRename) Id() string {
 	return "rename"
 }
 
-func (c *renameUser) Arguments() []string {
+func (c *userRename) IsForAdminOnly() bool { return true }
+
+func (c *userRename) Arguments() []string {
 	return []string{usernameArg, usernameArg}
 }
 
-func (c *renameUser) Run(args ...string) (string, error) {
-	const op = "commands.renameUser.Run"
+func (c *userRename) Description() string {
+	return "Change username"
+}
+
+func (c *userRename) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userRename.Run"
 	var username, usernameTo string
 
 	if len(args) == 0 {

@@ -1,108 +1,75 @@
 package socks5
 
 import (
+	"errors"
 	"fmt"
 	"github.com/things-go/go-socks5"
+	"io"
 	"log/slog"
-	"net"
 	"proxy-server-with-tg-admin/internal/infrastructure/adblock"
 	"proxy-server-with-tg-admin/internal/usecase/auth"
 	"proxy-server-with-tg-admin/internal/usecase/statistic"
-	"sync"
+	"strings"
 )
 
 type userIdKey string
 
 type Server struct {
 	*socks5.Server
-
-	wg     sync.WaitGroup
-	stopCh chan struct{}
-	logger *slog.Logger
 }
 
 func New(statisticTracker *statistic.Tracker, adBlock *adblock.Adblock, authenticator *auth.Authenticator, logger *slog.Logger) *Server {
 	srv := socks5.NewServer(
 		socks5.WithAuthMethods([]socks5.Authenticator{&UserPassAuthenticator{credentials: &CredentialStore{authenticator: authenticator, logger: logger}}}),
-		socks5.WithLogger(&Logger{logger: logger}),
 		socks5.WithRule(&Rule{adBlock: adBlock, logger: logger}),
 		socks5.WithDialAndRequest(dialAndRequest(statisticTracker, logger)),
 		socks5.WithDial(dial(statisticTracker, logger)),
 		socks5.WithResolver(DNSResolver{adBlock: adBlock}),
+		socks5.WithLogger(&logAdapter{logger: logger}),
 	)
 
 	return &Server{
 		Server: srv,
-		stopCh: make(chan struct{}),
-		logger: logger,
 	}
 }
 
-func (s *Server) ListenAndServe(network, addr string) error {
-	const op = "socks5.ListenAndServe"
-
-	l, err := net.Listen(network, addr)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	return s.Serve(l)
+type logAdapter struct {
+	logger *slog.Logger
 }
 
-func (s *Server) Serve(l net.Listener) error {
-	const op = "socks5.Serve"
+func (l *logAdapter) Errorf(format string, args ...interface{}) {
+	if len(args) > 0 {
+		errStr := fmt.Sprintf(format, args...)
 
-	defer l.Close() //nolint:errcheck
+		for _, arg := range args {
+			if err, ok := arg.(error); ok && isExpectedError(err) {
+				l.logger.Debug(errStr)
 
-	for {
-		select {
-		case <-s.stopCh:
-			return nil
-		default:
-			conn, err := l.Accept()
-			if err != nil {
-				return fmt.Errorf("%s: failed to accept connection: %w", op, err)
+				return
 			}
+		}
 
-			errCh := make(chan error)
-
-			go func() {
-				errCh <- s.ServeConn(conn)
-			}()
-
-			s.wg.Add(1)
-
-			go func() {
-				defer s.wg.Done()
-
-				select {
-				case <-s.stopCh:
-					s.logger.Debug("Socks5 server stopping serve connection")
-
-					if err := conn.Close(); err != nil {
-						s.logger.Warn("Socks5 server stopping serve connection", "conn.Close", err)
-					}
-				case err = <-errCh:
-					if err != nil {
-						s.logger.Error(op, "serve connection", err)
-					}
-				}
-			}()
+		if isExpectedErrorString(errStr) {
+			l.logger.Debug(errStr)
+		} else {
+			l.logger.Error(errStr)
 		}
 	}
 }
 
-func (s *Server) Shutdown() {
-	s.logger.Debug("Socks5 server shutting down")
-	close(s.stopCh)
+func isExpectedError(err error) bool {
+	if err == nil {
+		return false
+	}
 
-	waitConnectionsCh := make(chan struct{})
+	return errors.Is(err, io.EOF)
+}
 
-	go func() {
-		s.wg.Wait()
-		close(waitConnectionsCh)
-	}()
+func isExpectedErrorString(msg string) bool {
+	if msg == "" {
+		return false
+	}
 
-	<-waitConnectionsCh
-	s.logger.Debug("Socks5 server all connections closed")
+	return strings.Contains(msg, "EOF") ||
+		strings.Contains(msg, "client want to used addr")
 }

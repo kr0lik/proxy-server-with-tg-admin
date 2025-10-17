@@ -53,7 +53,7 @@ func main() {
 
 	logger.Info("Telegram bot starting")
 
-	tgBot, err := telegram.MakeBot(cfg.TelegramToken(), cfg.TelegramAdminId(), cmdList)
+	tgBot, err := telegram.MakeBot(cfg.TelegramToken(), cfg.TelegramAdminId(), cmdList, logger)
 	if err != nil {
 		logger.Error("Failed to start telegram bot", "err", err)
 
@@ -70,7 +70,6 @@ func main() {
 	logger.Info("Socks5 server starting")
 
 	socks5Server := socks5.New(statisticTracker, adBlock, authenticator, logger)
-	defer socks5Server.Shutdown()
 
 	go func() {
 		serverAddr := fmt.Sprintf(":%d", cfg.PortSocks5())

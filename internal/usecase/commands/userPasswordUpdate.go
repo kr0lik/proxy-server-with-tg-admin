@@ -6,23 +6,29 @@ import (
 	"proxy-server-with-tg-admin/internal/usecase/auth"
 )
 
-type updatePassword struct {
+type userPasswordUpdate struct {
 	ip            string
 	port          uint
 	storage       StorageInterface
 	authenticator *auth.Authenticator
 }
 
-func (c *updatePassword) Id() string {
+func (c *userPasswordUpdate) Id() string {
 	return "password"
 }
 
-func (c *updatePassword) Arguments() []string {
+func (c *userPasswordUpdate) IsForAdminOnly() bool { return true }
+
+func (c *userPasswordUpdate) Arguments() []string {
 	return []string{usernameArg, "[password]"}
 }
 
-func (c *updatePassword) Run(args ...string) (string, error) {
-	const op = "commands.updatePassword.Run"
+func (c *userPasswordUpdate) Description() string {
+	return "Change user password"
+}
+
+func (c *userPasswordUpdate) Run(telegramId int64, args ...string) (string, error) {
+	const op = "commands.userPasswordUpdate.Run"
 	var username string
 
 	if len(args) == 0 {

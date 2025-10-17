@@ -8,7 +8,7 @@ import (
 )
 
 const syncPeriod = time.Second * 30
-const consumeIncomeChBufferSize = 10000
+const consumeIncomeChBufferSize = 15000
 
 type StorageInterface interface {
 	AddStat(userId uint32, bytesIn, bytesOut uint64) error
